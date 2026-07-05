@@ -2882,10 +2882,16 @@ window.ANATOMY_DATA = {
         },
         {
           "id": "hip-muscles",
-          "label": "髋臀肌群示意",
-          "image": "images/38-hip-muscles.jpeg",
-          "w": 1098,
-          "h": 714,
+          "label": "髋部学习/测试图",
+          "image": "images/71-hip-study-sketch.png",
+          "w": 1104,
+          "h": 976,
+          "editImage": "images/71-hip-study-sketch.png",
+          "editW": 1104,
+          "editH": 976,
+          "practiceImage": "images/71-hip-study-sketch.png",
+          "practiceW": 1104,
+          "practiceH": 976,
           "crop": {
             "x": 0,
             "y": 0,
@@ -3043,8 +3049,8 @@ window.ANATOMY_DATA = {
       "title": "㊲ 下肢肌肉彩色图 (下肢)"
     },
     {
-      "file": "images/38-hip-muscles.jpeg",
-      "title": "㊳ 髋臀肌群示意 (骨盆/髋)"
+      "file": "images/71-hip-study-sketch.png",
+      "title": "髋部学习/测试图 (骨盆/髋)"
     },
     {
       "file": "images/39-hand-views-practice.jpeg",
