@@ -236,20 +236,6 @@ window.ANATOMY_DATA = {
           ]
         },
         {
-          "id": "hand-summary",
-          "label": "手部汇总(PPT)",
-          "image": "images/16-hand-summary.jpeg",
-          "w": 768,
-          "h": 1024,
-          "crop": {
-            "x": 0,
-            "y": 0,
-            "w": 100,
-            "h": 100
-          },
-          "points": []
-        },
-        {
           "id": "hand-wrist-small",
           "label": "手势照片练习",
           "image": "images/50-hand-pose-learn.jpeg",
@@ -797,23 +783,9 @@ window.ANATOMY_DATA = {
         {
           "id": "forearm-photo",
           "label": "前臂照片",
-          "image": "images/14-forearm-photo.jpeg",
-          "w": 768,
-          "h": 1024,
-          "crop": {
-            "x": 0,
-            "y": 0,
-            "w": 100,
-            "h": 100
-          },
-          "points": []
-        },
-        {
-          "id": "shoulder-clavicle",
-          "label": "锁骨肩带",
-          "image": "images/25-shoulder-clavicle.jpeg",
-          "w": 721,
-          "h": 1088,
+          "image": "images/73-forearm-photo-real.jpeg",
+          "w": 896,
+          "h": 1195,
           "crop": {
             "x": 0,
             "y": 0,
@@ -1206,34 +1178,6 @@ window.ANATOMY_DATA = {
               "name": "比目鱼肌线"
             }
           ]
-        },
-        {
-          "id": "thigh-sketch",
-          "label": "大腿肌肉素描",
-          "image": "images/12-thigh-sketch.jpeg",
-          "w": 768,
-          "h": 1024,
-          "crop": {
-            "x": 0,
-            "y": 0,
-            "w": 100,
-            "h": 100
-          },
-          "points": []
-        },
-        {
-          "id": "legs-back",
-          "label": "双腿背面素描",
-          "image": "images/18-legs-back.jpeg",
-          "w": 768,
-          "h": 1024,
-          "crop": {
-            "x": 0,
-            "y": 0,
-            "w": 100,
-            "h": 100
-          },
-          "points": []
         },
         {
           "id": "lowerleg-medial-ankle",
@@ -2078,20 +2022,6 @@ window.ANATOMY_DATA = {
           ]
         },
         {
-          "id": "torso-sketch",
-          "label": "躯干素描",
-          "image": "images/07-torso-sketch.jpeg",
-          "w": 768,
-          "h": 1024,
-          "crop": {
-            "x": 0,
-            "y": 0,
-            "w": 100,
-            "h": 100
-          },
-          "points": []
-        },
-        {
           "id": "torso-shoulder-chest",
           "label": "颈肩胸练习",
           "image": "images/48-torso-shoulder-learn.jpeg",
@@ -2766,9 +2696,9 @@ window.ANATOMY_DATA = {
         {
           "id": "fullbody-standing",
           "label": "全身·站立正面",
-          "image": "images/20-fullbody-standing.jpeg",
-          "w": 768,
-          "h": 1024,
+          "image": "images/72-fullbody-standing-real.jpeg",
+          "w": 896,
+          "h": 1195,
           "crop": {
             "x": 0,
             "y": 0,
@@ -2789,7 +2719,268 @@ window.ANATOMY_DATA = {
             "w": 100,
             "h": 100
           },
-          "points": []
+          "points": [
+            {
+              "x": 36.56,
+              "y": 22.33,
+              "name": "喉结"
+            },
+            {
+              "x": 36.96,
+              "y": 17.27,
+              "name": "胸锁乳突肌线"
+            },
+            {
+              "x": 23.11,
+              "y": 22.64,
+              "name": "斜方肌"
+            },
+            {
+              "x": 43.48,
+              "y": 11.28,
+              "name": "肩峰"
+            },
+            {
+              "x": 40.43,
+              "y": 18.96,
+              "name": "锁骨上窝"
+            },
+            {
+              "x": 49.8,
+              "y": 13.12,
+              "name": "三角肌线"
+            },
+            {
+              "x": 26.17,
+              "y": 26.48,
+              "name": "锁骨下窝"
+            },
+            {
+              "x": 38.29,
+              "y": 24.48,
+              "name": "颈窝"
+            },
+            {
+              "x": 40.02,
+              "y": 26.17,
+              "name": "胸骨柄"
+            },
+            {
+              "x": 18.63,
+              "y": 32.92,
+              "name": "三角肌尾"
+            },
+            {
+              "x": 44.91,
+              "y": 28.78,
+              "name": "中胸窝"
+            },
+            {
+              "x": 51.63,
+              "y": 29.09,
+              "name": "乳下弧线"
+            },
+            {
+              "x": 48.78,
+              "y": 31.08,
+              "name": "胸窝"
+            },
+            {
+              "x": 55.7,
+              "y": 34.15,
+              "name": "腹直肌沟"
+            },
+            {
+              "x": 59.37,
+              "y": 38.45,
+              "name": "腹白线"
+            },
+            {
+              "x": 58.76,
+              "y": 21.41,
+              "name": "肩胛骨腋侧缘"
+            },
+            {
+              "x": 64.87,
+              "y": 34.31,
+              "name": "腹外斜肌线"
+            },
+            {
+              "x": 65.48,
+              "y": 43.21,
+              "name": "腹股沟"
+            },
+            {
+              "x": 61.61,
+              "y": 46.58,
+              "name": "🐔"
+            },
+            {
+              "x": 64.87,
+              "y": 30.31,
+              "name": "髂前上棘"
+            },
+            {
+              "x": 47.15,
+              "y": 34.31,
+              "name": "肋弓"
+            },
+            {
+              "x": 54.89,
+              "y": 13.28,
+              "name": "肱二头肌线"
+            },
+            {
+              "x": 57.74,
+              "y": 10.36,
+              "name": "肱三头肌线"
+            },
+            {
+              "x": 65.48,
+              "y": 9.13,
+              "name": "肱骨外上髁"
+            },
+            {
+              "x": 70.57,
+              "y": 8.67,
+              "name": "尺骨鹰突"
+            },
+            {
+              "x": 71.19,
+              "y": 10.67,
+              "name": "肱骨内上髁"
+            },
+            {
+              "x": 69.15,
+              "y": 13.28,
+              "name": "尺骨线"
+            },
+            {
+              "x": 76.69,
+              "y": 22.95,
+              "name": "尺骨茎突"
+            },
+            {
+              "x": 41.65,
+              "y": 37.99,
+              "name": "髂嵴"
+            },
+            {
+              "x": 21.28,
+              "y": 42.29,
+              "name": "前臂外侧肌群线"
+            },
+            {
+              "x": 22.91,
+              "y": 40.91,
+              "name": "肘窝"
+            },
+            {
+              "x": 25.56,
+              "y": 41.21,
+              "name": "肱骨内上髂"
+            },
+            {
+              "x": 17.82,
+              "y": 44.74,
+              "name": "腕骨"
+            },
+            {
+              "x": 15.98,
+              "y": 46.28,
+              "name": "腕结节"
+            },
+            {
+              "x": 57.54,
+              "y": 52.72,
+              "name": "缝匠肌沟"
+            },
+            {
+              "x": 45.93,
+              "y": 43.67,
+              "name": "阔筋膜张肌线"
+            },
+            {
+              "x": 76.07,
+              "y": 65.46,
+              "name": "腓肠肌线"
+            },
+            {
+              "x": 71.56,
+              "y": 68.92,
+              "name": "比目鱼肌线"
+            },
+            {
+              "x": 67.93,
+              "y": 68.53,
+              "name": "跟腱"
+            },
+            {
+              "x": 65.48,
+              "y": 70.68,
+              "name": "跟结节"
+            },
+            {
+              "x": 67.72,
+              "y": 75.44,
+              "name": "足内侧弓"
+            },
+            {
+              "x": 73.22,
+              "y": 75.13,
+              "name": "足横弓"
+            },
+            {
+              "x": 58.76,
+              "y": 62.39,
+              "name": "股四头肌腱沟"
+            },
+            {
+              "x": 53.46,
+              "y": 65.92,
+              "name": "股胫骨外侧髂"
+            },
+            {
+              "x": 56.52,
+              "y": 69.61,
+              "name": "腓骨头"
+            },
+            {
+              "x": 62.43,
+              "y": 74.06,
+              "name": "胫骨线"
+            },
+            {
+              "x": 59.78,
+              "y": 77.28,
+              "name": "胫骨前肌线"
+            },
+            {
+              "x": 63.85,
+              "y": 88.49,
+              "name": "内踝"
+            },
+            {
+              "x": 57.54,
+              "y": 89.41,
+              "name": "外踝"
+            },
+            {
+              "x": 59.57,
+              "y": 92.79,
+              "name": "跗跖关节凸"
+            },
+            {
+              "x": 65.48,
+              "y": 95.4,
+              "name": "第一跖趾侧凸"
+            },
+            {
+              "x": 56.11,
+              "y": 94.93,
+              "name": "第五跖趾侧凸"
+            }
+          ]
         }
       ]
     },
@@ -2806,76 +2997,6 @@ window.ANATOMY_DATA = {
           "editImage": "images/26-pelvis-hip-landmarks.jpeg",
           "editW": 424,
           "editH": 375,
-          "practiceImage": "images/71-hip-study-sketch.png",
-          "practiceW": 1104,
-          "practiceH": 976,
-          "practicePoints": [
-            {
-              "x": 39.26,
-              "y": 34.62,
-              "name": "脊柱沟"
-            },
-            {
-              "x": 43.87,
-              "y": 37.06,
-              "name": "骶髂肌线"
-            },
-            {
-              "x": 50.82,
-              "y": 31.24,
-              "name": "胸廓底边"
-            },
-            {
-              "x": 50.55,
-              "y": 40.72,
-              "name": "髂结节"
-            },
-            {
-              "x": 55.58,
-              "y": 46.4,
-              "name": "髂嵴"
-            },
-            {
-              "x": 39.94,
-              "y": 45.32,
-              "name": "第五腰椎棘突"
-            },
-            {
-              "x": 38.79,
-              "y": 54.89,
-              "name": "腰骶菱形窝"
-            },
-            {
-              "x": 39.41,
-              "y": 61.7,
-              "name": "尾骨"
-            },
-            {
-              "x": 39.03,
-              "y": 71.77,
-              "name": "臀沟"
-            },
-            {
-              "x": 35.91,
-              "y": 78.25,
-              "name": "臀折线"
-            },
-            {
-              "x": 44.53,
-              "y": 48.53,
-              "name": "髂后上棘"
-            },
-            {
-              "x": 56.07,
-              "y": 63.84,
-              "name": "大转子"
-            },
-            {
-              "x": 51.52,
-              "y": 64.49,
-              "name": "髋关节窝"
-            }
-          ],
           "crop": {
             "x": 0,
             "y": 0,
@@ -2949,20 +3070,6 @@ window.ANATOMY_DATA = {
               "name": "髋关节窝"
             }
           ]
-        },
-        {
-          "id": "hip-muscles",
-          "label": "髋臀肌群示意",
-          "image": "images/38-hip-muscles.jpeg",
-          "w": 1098,
-          "h": 714,
-          "crop": {
-            "x": 0,
-            "y": 0,
-            "w": 100,
-            "h": 100
-          },
-          "points": []
         }
       ]
     }
@@ -2993,10 +3100,6 @@ window.ANATOMY_DATA = {
       "title": "⑥ 手部多视图 (手)"
     },
     {
-      "file": "images/07-torso-sketch.jpeg",
-      "title": "⑦ 躯干素描 (躯干)"
-    },
-    {
       "file": "images/08-torso-photo.jpeg",
       "title": "⑧ 躯干照片·正面 (躯干)"
     },
@@ -3013,40 +3116,20 @@ window.ANATOMY_DATA = {
       "title": "⑪ 半身素描·蹲 (综合)"
     },
     {
-      "file": "images/12-thigh-sketch.jpeg",
-      "title": "⑫ 大腿肌肉素描 (下肢)"
-    },
-    {
       "file": "images/13-arm-sketch.jpeg",
       "title": "⑬ 手臂肌肉素描 (上肢)"
-    },
-    {
-      "file": "images/14-forearm-photo.jpeg",
-      "title": "⑭ 前臂照片·彩色标注 (上肢)"
     },
     {
       "file": "images/15-fullbody-sketch-front.jpeg",
       "title": "⑮ 全身素描·奔跑 (综合)"
     },
     {
-      "file": "images/16-hand-summary.jpeg",
-      "title": "⑯ 手部结构点汇总 (手)"
-    },
-    {
       "file": "images/17-fullbody-squat.jpeg",
       "title": "⑰ 全身素描·蹲坐 (综合)"
     },
     {
-      "file": "images/18-legs-back.jpeg",
-      "title": "⑱ 全身素描·蹲坐 (综合)"
-    },
-    {
       "file": "images/19-back-linedrawing.jpeg",
       "title": "⑲ 全身素描·蹲坐(展腿) (综合)"
-    },
-    {
-      "file": "images/20-fullbody-standing.jpeg",
-      "title": "⑳ 全身素描·站立正面 (综合)"
     },
     {
       "file": "images/21-fullbody-squat2.jpeg",
@@ -3059,10 +3142,6 @@ window.ANATOMY_DATA = {
     {
       "file": "images/23-model-color-side.jpeg",
       "title": "㉓ 男模彩色标注·侧面 (综合)"
-    },
-    {
-      "file": "images/25-shoulder-clavicle.jpeg",
-      "title": "㉕ 锁骨肩带 (上肢)"
     },
     {
       "file": "images/26-pelvis-hip-landmarks.jpeg",
@@ -3111,10 +3190,6 @@ window.ANATOMY_DATA = {
     {
       "file": "images/37-lowerlimb-muscle-color.jpeg",
       "title": "㊲ 下肢肌肉彩色图 (下肢)"
-    },
-    {
-      "file": "images/38-hip-muscles.jpeg",
-      "title": "㊳ 髋臀肌群示意 (骨盆/髋)"
     },
     {
       "file": "images/39-hand-views-practice.jpeg",
@@ -3211,6 +3286,14 @@ window.ANATOMY_DATA = {
     {
       "file": "images/65-fullbody-balance.png",
       "title": "65 全身男模·斜撑平衡 (综合)"
+    },
+    {
+      "file": "images/73-forearm-photo-real.jpeg",
+      "title": "前臂照片·真实照片 (上肢)"
+    },
+    {
+      "file": "images/72-fullbody-standing-real.jpeg",
+      "title": "全身·站立正面·真实照片 (背部)"
     }
   ]
 };
