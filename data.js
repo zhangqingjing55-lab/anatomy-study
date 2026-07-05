@@ -2806,6 +2806,76 @@ window.ANATOMY_DATA = {
           "editImage": "images/26-pelvis-hip-landmarks.jpeg",
           "editW": 424,
           "editH": 375,
+          "practiceImage": "images/71-hip-study-sketch.png",
+          "practiceW": 1104,
+          "practiceH": 976,
+          "practicePoints": [
+            {
+              "x": 39.26,
+              "y": 34.62,
+              "name": "脊柱沟"
+            },
+            {
+              "x": 43.87,
+              "y": 37.06,
+              "name": "骶髂肌线"
+            },
+            {
+              "x": 50.82,
+              "y": 31.24,
+              "name": "胸廓底边"
+            },
+            {
+              "x": 50.55,
+              "y": 40.72,
+              "name": "髂结节"
+            },
+            {
+              "x": 55.58,
+              "y": 46.4,
+              "name": "髂嵴"
+            },
+            {
+              "x": 39.94,
+              "y": 45.32,
+              "name": "第五腰椎棘突"
+            },
+            {
+              "x": 38.79,
+              "y": 54.89,
+              "name": "腰骶菱形窝"
+            },
+            {
+              "x": 39.41,
+              "y": 61.7,
+              "name": "尾骨"
+            },
+            {
+              "x": 39.03,
+              "y": 71.77,
+              "name": "臀沟"
+            },
+            {
+              "x": 35.91,
+              "y": 78.25,
+              "name": "臀折线"
+            },
+            {
+              "x": 44.53,
+              "y": 48.53,
+              "name": "髂后上棘"
+            },
+            {
+              "x": 56.07,
+              "y": 63.84,
+              "name": "大转子"
+            },
+            {
+              "x": 51.52,
+              "y": 64.49,
+              "name": "髋关节窝"
+            }
+          ],
           "crop": {
             "x": 0,
             "y": 0,
@@ -2882,16 +2952,10 @@ window.ANATOMY_DATA = {
         },
         {
           "id": "hip-muscles",
-          "label": "髋部学习/测试图",
-          "image": "images/71-hip-study-sketch.png",
-          "w": 1104,
-          "h": 976,
-          "editImage": "images/71-hip-study-sketch.png",
-          "editW": 1104,
-          "editH": 976,
-          "practiceImage": "images/71-hip-study-sketch.png",
-          "practiceW": 1104,
-          "practiceH": 976,
+          "label": "髋臀肌群示意",
+          "image": "images/38-hip-muscles.jpeg",
+          "w": 1098,
+          "h": 714,
           "crop": {
             "x": 0,
             "y": 0,
@@ -3049,8 +3113,8 @@ window.ANATOMY_DATA = {
       "title": "㊲ 下肢肌肉彩色图 (下肢)"
     },
     {
-      "file": "images/71-hip-study-sketch.png",
-      "title": "髋部学习/测试图 (骨盆/髋)"
+      "file": "images/38-hip-muscles.jpeg",
+      "title": "㊳ 髋臀肌群示意 (骨盆/髋)"
     },
     {
       "file": "images/39-hand-views-practice.jpeg",
