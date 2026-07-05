@@ -50,26 +50,27 @@
 
   main{flex:1;display:flex;min-height:0}
   .stagewrap{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-width:0;overflow:auto}
-  .stage{position:relative;max-width:100%;max-height:100%;background:#000;border-radius:10px;
+  .stage{--dot-size:20px;--dot-font-size:11px;--dot-border:2px;--dot-ring:2px;--learn-dot-size:15px;
+         position:relative;max-width:100%;max-height:100%;background:#000;border-radius:10px;
          overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
   .imgspace{position:absolute;inset:0}
   .imgspace img{position:absolute;left:0;top:0;width:100%;height:100%;user-select:none;-webkit-user-drag:none}
 
-  .dot{--dot-scale:1;position:absolute;width:20px;height:20px;border-radius:50%;
-       background:var(--dot);border:2px solid #1a1200;cursor:pointer;touch-action:none;
-       box-shadow:0 0 0 2px rgba(255,210,63,.35);transition:transform .1s;z-index:5;
+  .dot{--dot-scale:1;position:absolute;width:var(--dot-size);height:var(--dot-size);border-radius:50%;
+       background:var(--dot);border:var(--dot-border) solid #1a1200;cursor:pointer;touch-action:none;
+       box-shadow:0 0 0 var(--dot-ring) rgba(255,210,63,.35);transition:transform .1s;z-index:5;
        transform:translate(-50%,-50%) scale(var(--dot-scale));transform-origin:center}
   .dot:hover{--dot-scale:1.25}
   .dot .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-            font-size:11px;font-weight:700;color:#241a00}
-  .dot.answered{background:var(--good);box-shadow:0 0 0 2px rgba(55,211,155,.35)}
+            font-size:var(--dot-font-size);font-weight:700;color:#241a00}
+  .dot.answered{background:var(--good);box-shadow:0 0 0 var(--dot-ring) rgba(55,211,155,.35)}
   .dot.wrong{background:var(--bad)}
   .dot.sel{--dot-scale:1.35;z-index:7}
 
   .tip{position:absolute;transform:translate(-50%,-140%);background:#000d;backdrop-filter:blur(4px);
        color:#fff;padding:4px 9px;border-radius:7px;font-size:14px;white-space:nowrap;z-index:9;
        border:1px solid var(--line);pointer-events:none}
-  .learn .dot{width:15px;height:15px}
+  .learn .dot{width:var(--learn-dot-size);height:var(--learn-dot-size)}
   .learn .dot .num{display:none}
 
   /* right side panel */
@@ -109,28 +110,34 @@
   .edit .editnote{display:block}
 
   @media (max-width:760px){
-    body{height:auto;min-height:100vh;overflow:auto;-webkit-text-size-adjust:100%}
-    header{padding:8px 12px;gap:8px}
-    header h1{font-size:15px}
+    body{height:auto;min-height:100dvh;overflow:auto;-webkit-text-size-adjust:100%}
+    header{padding:7px 10px 6px;gap:6px}
+    header h1{font-size:14px}
     header .sub{display:none}
-    .tabs{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px}
-    .tab{flex:0 0 auto;padding:7px 13px}
-    .modebar{padding:8px 12px;gap:6px}
-    .viewbar{padding:7px 12px}
+    .tabs{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 0 2px;gap:5px}
+    .tab{flex:0 0 auto;padding:6px 11px;font-size:13px;border-radius:10px}
+    .modebar{padding:7px 10px;gap:6px;align-items:flex-start}
     .modebar .hint{display:none}
-    .seg button{padding:7px 12px}
-    .quizbar{padding:9px 12px;gap:9px}
-    .quizbar .q{font-size:15px}
-    .quizbar .q b{font-size:18px}
+    .seg{width:100%;display:flex}
+    .seg button{flex:1;padding:7px 8px;font-size:13px}
+    .btn{padding:6px 10px;font-size:12px}
+    .btn.mini{padding:5px 8px;font-size:12px}
+    .score{font-size:12px}
+    .viewbar{padding:6px 10px;gap:6px}
+    .viewbtn{padding:5px 10px;font-size:12px}
+    .quizbar{padding:8px 10px;gap:8px;flex-wrap:wrap}
+    .quizbar .q{font-size:14px;flex:1 1 100%}
+    .quizbar .q b{font-size:17px}
     main{flex-direction:column;flex:none}
-    .stagewrap{height:auto;flex:none;padding:8px;overflow:visible}
+    .stagewrap{height:auto;flex:none;padding:10px 10px 6px;overflow:visible;align-items:flex-start}
+    .stage{border-radius:12px}
     aside{width:100%;border-left:none;border-top:1px solid var(--line)}
     aside h3{padding:10px 12px}
-    .list{flex:none;max-height:40vh}
+    .list{flex:none;max-height:28vh}
     .li{padding:10px 10px}
-    .dot{width:26px;height:26px}
-    .dot .num{font-size:12px}
-    .learn .dot{width:20px;height:20px}
+    .asidebtns{padding:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .asidebtns .btn{width:100%;padding:7px 0}
+    .stage{--dot-size:18px;--dot-font-size:10px;--dot-border:1.5px;--dot-ring:1.5px;--learn-dot-size:13px}
     .gallery{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px}
     .lightbox{padding:10px}
     .lightbox .x{top:8px;right:14px}
@@ -345,10 +352,35 @@ function render(){
   // fit stage into wrap
   const wrap=$("#stagewrap");
   const mobile = window.innerWidth<=760;
-  const availW = wrap.clientWidth-(mobile?16:28), availH = wrap.clientHeight-28;
+  const availW = wrap.clientWidth-(mobile?20:28), availH = wrap.clientHeight-28;
   let sw=availW, sh=sw/ar;
-  if(!mobile && sh>availH){ sh=availH; sw=sh*ar; } // desktop: also fit height
+  if(mobile){
+    const headerH = document.querySelector("header")?.offsetHeight || 0;
+    const modebarH = $("#modebar").offsetParent ? $("#modebar").offsetHeight : 0;
+    const viewbarH = viewbar.offsetParent ? viewbar.offsetHeight : 0;
+    const quizbarH = mode==="test" && points.length ? Math.max(quizbar.offsetHeight, 54) : 0;
+    const reservedH = headerH + modebarH + viewbarH + quizbarH + 92;
+    const mobileMaxH = Math.max(220, Math.min(window.innerHeight*0.52, window.innerHeight-reservedH));
+    if(sh>mobileMaxH){ sh=mobileMaxH; sw=sh*ar; }
+  } else if(sh>availH){
+    sh=availH; sw=sh*ar;
+  } // desktop: also fit height
   stage.style.width=sw+"px"; stage.style.height=sh+"px";
+  const pointDensity = points.length / Math.max((sw*sh)/10000,1);
+  let dotSize = mobile ? 18 : 20;
+  if(mobile){
+    const densityPenalty = Math.min(3.5, Math.max(0, pointDensity-1.6));
+    dotSize = Math.max(14, Math.min(18, sw/19 - densityPenalty));
+  }
+  const learnDotSize = Math.max(mobile ? 10 : 12, dotSize-(mobile ? 4 : 5));
+  const dotFontSize = Math.max(9, Math.round(dotSize*0.5));
+  const dotBorder = mobile ? 1.5 : 2;
+  const dotRing = mobile ? 1.5 : 2;
+  stage.style.setProperty("--dot-size", `${dotSize}px`);
+  stage.style.setProperty("--learn-dot-size", `${learnDotSize}px`);
+  stage.style.setProperty("--dot-font-size", `${dotFontSize}px`);
+  stage.style.setProperty("--dot-border", `${dotBorder}px`);
+  stage.style.setProperty("--dot-ring", `${dotRing}px`);
   // image fills crop
   img.src=meta.image;
   img.alt=`${curRegion.name} · ${curView.label}`;
@@ -569,7 +601,9 @@ const qp=new URLSearchParams(location.search);
 if(qp.get("region")){ const r=DATA.regions.find(x=>x.id===qp.get("region")); if(r){ curRegion=r; curView=r.views[0]; const ti=DATA.regions.indexOf(r); setTab(tabs.children[ti]); } }
 if(qp.get("view")){ const v=curRegion.views.find(x=>x.id===qp.get("view")); if(v) curView=v; }
 if(qp.get("mode")){ mode=qp.get("mode"); document.querySelectorAll("#modeseg button").forEach(x=>x.classList.toggle("on",x.dataset.mode===mode)); }
-window.addEventListener("resize",()=>{ if($("#gallery").classList.contains("show"))return; render(); });
+const rerender=()=>{ if($("#gallery").classList.contains("show"))return; render(); };
+window.addEventListener("resize",rerender);
+if(window.visualViewport){ window.visualViewport.addEventListener("resize",rerender); }
 img.onload=()=>{ /* keep sizing correct after load */ };
 renderViewbar();
 render();
