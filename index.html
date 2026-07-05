@@ -269,6 +269,9 @@ function activeMeta(){
   };
 }
 function activePoints(){ return activeMeta().points; }
+function isFullbodyView(view=curView){
+  return !!view && (String(view.id||"").startsWith("fullbody-") || String(view.label||"").includes("全身"));
+}
 
 const $ = s=>document.querySelector(s);
 const stage=$("#stage"), imgspace=$("#imgspace"), img=$("#mainimg");
@@ -372,7 +375,12 @@ function render(){
     const densityPenalty = Math.min(3.5, Math.max(0, pointDensity-1.6));
     dotSize = Math.max(14, Math.min(18, sw/19 - densityPenalty));
   }
-  const learnDotSize = Math.max(mobile ? 10 : 12, dotSize-(mobile ? 4 : 5));
+  const fullbody = isFullbodyView();
+  if(fullbody){
+    dotSize = Math.max(9, +(dotSize*(2/3)).toFixed(2));
+  }
+  const learnDotFloor = fullbody ? 7 : (mobile ? 10 : 12);
+  const learnDotSize = Math.max(learnDotFloor, dotSize-(mobile ? 4 : 5));
   const dotFontSize = Math.max(9, Math.round(dotSize*0.5));
   const dotBorder = mobile ? 1.5 : 2;
   const dotRing = mobile ? 1.5 : 2;
