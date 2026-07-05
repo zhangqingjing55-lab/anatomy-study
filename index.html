@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>人体结构学 · 复习</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel2:#1e2739; --line:#2b3854;
+    --txt:#e7ecf6; --mut:#93a0bd; --accent:#4db6ff; --good:#37d39b; --bad:#ff6b7a;
+    --dot:#ffd23f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       display:flex;flex-direction:column;height:100vh;overflow:hidden}
+  header{padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);
+         display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0;font-weight:700;white-space:nowrap}
+  header .sub{color:var(--mut);font-size:12px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .tab{padding:6px 12px;border-radius:8px;background:var(--panel2);color:var(--mut);
+       border:1px solid transparent;cursor:pointer;font-size:14px;user-select:none}
+  .tab:hover{color:var(--txt)}
+  .tab.active{background:var(--accent);color:#04121f;font-weight:700}
+
+  .modebar{padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);
+           display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .viewbar{padding:7px 16px;background:#121928;border-bottom:1px solid var(--line);
+           display:flex;gap:7px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .viewbar:empty{display:none}
+  .viewbtn{border:1px solid var(--line);background:var(--panel2);color:var(--mut);
+           padding:5px 11px;border-radius:999px;cursor:pointer;font-size:13px;
+           white-space:nowrap;flex:0 0 auto}
+  .viewbtn:hover{color:var(--txt);border-color:var(--accent)}
+  .viewbtn.on{background:var(--accent);border-color:var(--accent);color:#04121f;font-weight:700}
+  .seg{display:inline-flex;background:var(--panel2);border-radius:9px;padding:3px}
+  .seg button{border:0;background:transparent;color:var(--mut);padding:6px 14px;border-radius:7px;
+              cursor:pointer;font-size:14px}
+  .seg button.on{background:var(--accent);color:#04121f;font-weight:700}
+  .modebar .hint{color:var(--mut);font-size:12px;margin-left:4px}
+  .btn{border:1px solid var(--line);background:var(--panel2);color:var(--txt);padding:6px 12px;
+       border-radius:8px;cursor:pointer;font-size:13px}
+  .btn:hover{border-color:var(--accent)}
+  .btn.mini{padding:4px 9px;font-size:12px}
+  .spacer{flex:1}
+  .score{font-size:13px;color:var(--mut)}
+  .score b{color:var(--good)}
+
+  main{flex:1;display:flex;min-height:0}
+  .stagewrap{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-width:0;overflow:auto}
+  .stage{position:relative;max-width:100%;max-height:100%;background:#000;border-radius:10px;
+         overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .imgspace{position:absolute;inset:0}
+  .imgspace img{position:absolute;left:0;top:0;width:100%;height:100%;user-select:none;-webkit-user-drag:none}
+
+  .dot{--dot-scale:1;position:absolute;width:20px;height:20px;border-radius:50%;
+       background:var(--dot);border:2px solid #1a1200;cursor:pointer;touch-action:none;
+       box-shadow:0 0 0 2px rgba(255,210,63,.35);transition:transform .1s;z-index:5;
+       transform:translate(-50%,-50%) scale(var(--dot-scale));transform-origin:center}
+  .dot:hover{--dot-scale:1.25}
+  .dot .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+            font-size:11px;font-weight:700;color:#241a00}
+  .dot.answered{background:var(--good);box-shadow:0 0 0 2px rgba(55,211,155,.35)}
+  .dot.wrong{background:var(--bad)}
+  .dot.sel{--dot-scale:1.35;z-index:7}
+
+  .tip{position:absolute;transform:translate(-50%,-140%);background:#000d;backdrop-filter:blur(4px);
+       color:#fff;padding:4px 9px;border-radius:7px;font-size:14px;white-space:nowrap;z-index:9;
+       border:1px solid var(--line);pointer-events:none}
+  .learn .dot{width:15px;height:15px}
+  .learn .dot .num{display:none}
+
+  /* right side panel */
+  aside{width:270px;background:var(--panel);border-left:1px solid var(--line);
+        display:flex;flex-direction:column;min-height:0}
+  aside h3{margin:0;padding:12px 14px;font-size:14px;border-bottom:1px solid var(--line);color:var(--mut)}
+  .list{overflow:auto;flex:1;padding:6px}
+  .li{padding:8px 10px;border-radius:7px;cursor:pointer;font-size:14px;display:flex;gap:8px;align-items:center}
+  .li:hover{background:var(--panel2)}
+  .li .b{width:20px;height:20px;border-radius:50%;background:var(--panel2);color:var(--mut);
+         display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+  .li.done .b{background:var(--good);color:#04121f}
+  .li.done{color:var(--mut);text-decoration:line-through}
+  .li.chosen{background:var(--accent);color:#04121f;font-weight:700}
+  .asidebtns{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+
+  /* quiz prompt bar (test mode) */
+  .quizbar{display:none;padding:10px 16px;background:var(--panel2);border-bottom:1px solid var(--line);
+           align-items:center;gap:12px;font-size:15px}
+  .quizbar.show{display:flex}
+  .quizbar .q{font-size:16px}
+  .quizbar .q b{color:var(--dot);font-size:19px}
+
+  /* gallery */
+  .gallery{display:none;flex:1;overflow:auto;padding:16px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .gallery.show{display:grid}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:zoom-in}
+  .card img{width:100%;display:block;background:#000}
+  .card .cap{padding:8px 10px;font-size:13px;color:var(--mut)}
+  .lightbox{display:none;position:fixed;inset:0;background:#000e;z-index:50;align-items:center;justify-content:center;padding:20px}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+  .lightbox .x{position:absolute;top:16px;right:20px;font-size:30px;color:#fff;cursor:pointer}
+
+  .editnote{display:none;position:absolute;left:10px;top:10px;background:#000c;padding:6px 10px;border-radius:8px;
+            font-size:12px;color:var(--dot);z-index:10;max-width:60%}
+  .edit .editnote{display:block}
+
+  @media (max-width:760px){
+    body{height:auto;min-height:100vh;overflow:auto;-webkit-text-size-adjust:100%}
+    header{padding:8px 12px;gap:8px}
+    header h1{font-size:15px}
+    header .sub{display:none}
+    .tabs{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px}
+    .tab{flex:0 0 auto;padding:7px 13px}
+    .modebar{padding:8px 12px;gap:6px}
+    .viewbar{padding:7px 12px}
+    .modebar .hint{display:none}
+    .seg button{padding:7px 12px}
+    .quizbar{padding:9px 12px;gap:9px}
+    .quizbar .q{font-size:15px}
+    .quizbar .q b{font-size:18px}
+    main{flex-direction:column;flex:none}
+    .stagewrap{height:auto;flex:none;padding:8px;overflow:visible}
+    aside{width:100%;border-left:none;border-top:1px solid var(--line)}
+    aside h3{padding:10px 12px}
+    .list{flex:none;max-height:40vh}
+    .li{padding:10px 10px}
+    .dot{width:26px;height:26px}
+    .dot .num{font-size:12px}
+    .learn .dot{width:20px;height:20px}
+    .gallery{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px}
+    .lightbox{padding:10px}
+    .lightbox .x{top:8px;right:14px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>人体结构学 · 复习</h1>
+  <span class="sub">点圆点显示结构名称</span>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<div class="modebar" id="modebar">
+  <div class="seg" id="modeseg">
+    <button data-mode="learn">学习模式</button>
+    <button data-mode="test" class="on">测试模式</button>
+    <button data-mode="edit">编辑模式</button>
+  </div>
+  <span class="hint" id="modehint"></span>
+  <span class="spacer"></span>
+  <span class="score" id="score"></span>
+  <button class="btn mini" id="resetTest">重置进度</button>
+</div>
+
+<div class="viewbar" id="viewbar"></div>
+
+<div class="quizbar" id="quizbar">
+  <span class="q">找出：<b id="quizname">—</b></span>
+  <button class="btn mini" id="quizSkip">跳过/不会</button>
+  <button class="btn mini" id="quizRestart">重新开始</button>
+  <span class="score" id="quizprog"></span>
+</div>
+
+<main>
+  <div class="stagewrap" id="stagewrap">
+    <div class="stage" id="stage">
+      <div class="imgspace" id="imgspace">
+        <img id="mainimg" alt="">
+      </div>
+      <div class="editnote">编辑模式：单击空白处新增圆点；拖动圆点调位置；点圆点可改名/删除。改完记得“导出数据”。</div>
+    </div>
+  </div>
+  <div class="gallery" id="gallery"></div>
+
+  <aside id="aside">
+    <h3 id="asideTitle">结构清单</h3>
+    <div class="list" id="list"></div>
+    <div class="asidebtns">
+      <button class="btn mini" id="revealAll">显示全部</button>
+      <button class="btn mini" id="hideAll">隐藏全部</button>
+      <button class="btn mini" id="exportBtn">导出数据</button>
+    </div>
+  </aside>
+</main>
+
+<div class="lightbox" id="lightbox"><span class="x" id="lbx">×</span><img id="lbimg" alt=""></div>
+
+<script src="data.js"></script>
+<script>
+const DATA = window.ANATOMY_DATA;
+const LS_EDITS = "anatomy_edits_v9";
+const LS_DONE  = "anatomy_done_v9";
+const LS_OLD_EDITS = "anatomy_edits_v1";
+const LS_OLD_DONE  = "anatomy_done_v1";
+
+function safeJson(raw,fallback){
+  try{ return raw ? JSON.parse(raw) : fallback; }catch(_){ return fallback; }
+}
+function normalizeData(){
+  DATA.regions.forEach(region=>{
+    if(!Array.isArray(region.views)){
+      region.views=[{
+        id: region.id+"-main",
+        label: region.name,
+        image: region.image,
+        w: region.w,
+        h: region.h,
+        crop: region.crop,
+        masks: region.masks,
+        points: region.points || []
+      }];
+    }
+    region.views.forEach((view,idx)=>{
+      view.id = view.id || `${region.id}-${idx+1}`;
+      view.label = view.label || `${region.name} ${idx+1}`;
+      view.crop = view.crop || {x:0,y:0,w:100,h:100};
+      view.points = Array.isArray(view.points) ? view.points : [];
+    });
+  });
+}
+normalizeData();
+
+function viewKey(region=curRegion,view=curView){ return `${region.id}:${view.id}`; }
+
+let edits = safeJson(localStorage.getItem(LS_EDITS), {});
+let done = safeJson(localStorage.getItem(LS_DONE), {});
+const oldEdits = safeJson(localStorage.getItem(LS_OLD_EDITS), {});
+const oldDone = safeJson(localStorage.getItem(LS_OLD_DONE), {});
+
+DATA.regions.forEach(region=>{
+  const first=region.views[0];
+  const k=`${region.id}:${first.id}`;
+  if(oldEdits[region.id] && !edits[k]) edits[k]=oldEdits[region.id];
+  if(oldDone[region.id] && !done[k]) done[k]=oldDone[region.id];
+  region.views.forEach(view=>{
+    const vk=`${region.id}:${view.id}`;
+    if(edits[vk]) view.points=edits[vk];
+  });
+});
+localStorage.setItem(LS_EDITS,JSON.stringify(edits));
+localStorage.setItem(LS_DONE,JSON.stringify(done));
+
+let curRegion = DATA.regions[0];
+let curView = curRegion.views[0];
+let mode = "test";
+let quiz = null; // {order:[idx...], pos, correct, total}
+
+function activeMeta(){
+  const editing = mode === "edit" && curView.editImage;
+  const practice = mode !== "edit" && curView.practiceImage;
+  return {
+    image: editing ? curView.editImage : (practice ? curView.practiceImage : curView.image),
+    w: editing ? (curView.editW || curView.w) : (practice ? (curView.practiceW || curView.w) : curView.w),
+    h: editing ? (curView.editH || curView.h) : (practice ? (curView.practiceH || curView.h) : curView.h),
+    crop: editing ? (curView.editCrop || curView.crop || {x:0,y:0,w:100,h:100}) : (practice ? (curView.practiceCrop || curView.crop || {x:0,y:0,w:100,h:100}) : (curView.crop || {x:0,y:0,w:100,h:100})),
+    masks: editing ? (curView.editMasks || curView.masks) : (practice ? curView.practiceMasks : curView.masks),
+    points: practice ? (curView.practicePoints || curView.points || []) : (curView.points || [])
+  };
+}
+function activePoints(){ return activeMeta().points; }
+
+const $ = s=>document.querySelector(s);
+const stage=$("#stage"), imgspace=$("#imgspace"), img=$("#mainimg");
+const listEl=$("#list"), scoreEl=$("#score"), quizbar=$("#quizbar");
+const viewbar=$("#viewbar");
+
+// ---------- tabs ----------
+const tabs=$("#tabs");
+DATA.regions.forEach(r=>{
+  const b=document.createElement("div"); b.className="tab"; b.textContent=r.name;
+  b.onclick=()=>{ selectRegion(r); setTab(b); showBody(); };
+  tabs.appendChild(b);
+});
+const galTab=document.createElement("div"); galTab.className="tab"; galTab.textContent="全部参考图";
+galTab.onclick=()=>{ setTab(galTab); showGallery(); };
+tabs.appendChild(galTab);
+function setTab(el){ [...tabs.children].forEach(c=>c.classList.remove("active")); el.classList.add("active"); }
+setTab(tabs.children[0]);
+
+function showGallery(){
+  $("#gallery").classList.add("show");
+  $("#stagewrap").style.display="none";
+  $("#aside").style.display="none";
+  $("#modebar").style.display="none";
+  viewbar.style.display="none";
+  quizbar.classList.remove("show");
+}
+function showBody(){
+  $("#gallery").classList.remove("show");
+  $("#stagewrap").style.display="flex";
+  $("#aside").style.display="flex";
+  $("#modebar").style.display="flex";
+  viewbar.style.display="flex";
+  renderViewbar();
+  render();
+}
+
+// ---------- mode ----------
+document.querySelectorAll("#modeseg button").forEach(b=>{
+  b.onclick=()=>{ mode=b.dataset.mode;
+    document.querySelectorAll("#modeseg button").forEach(x=>x.classList.toggle("on",x===b));
+    render();
+  };
+});
+const HINTS={learn:"鼠标移到圆点上即可看名称。",test:"按提示找结构，或直接点圆点作答。",edit:"编辑圆点位置与名称。"};
+
+function selectRegion(r){
+  curRegion=r;
+  curView=r.views[0];
+  quiz=null;
+}
+function selectView(view){
+  curView=view;
+  quiz=null;
+  renderViewbar();
+  render();
+}
+function renderViewbar(){
+  viewbar.innerHTML="";
+  curRegion.views.forEach(view=>{
+    const b=document.createElement("button");
+    b.className="viewbtn"+(view===curView?" on":"");
+    b.type="button";
+    b.textContent=view.label;
+    b.onclick=()=>selectView(view);
+    viewbar.appendChild(b);
+  });
+}
+
+// ---------- render ----------
+function render(){
+  $("#modehint").textContent=HINTS[mode];
+  stage.className="stage "+mode;
+  const testing = (mode==="test");
+  const meta = activeMeta();
+  const points = meta.points;
+  // geometry
+  const c = testing ? meta.crop : {x:0,y:0,w:100,h:100};
+  const pxW = meta.w*(c.w/100), pxH = meta.h*(c.h/100);
+  const ar = pxW/pxH;
+  // fit stage into wrap
+  const wrap=$("#stagewrap");
+  const mobile = window.innerWidth<=760;
+  const availW = wrap.clientWidth-(mobile?16:28), availH = wrap.clientHeight-28;
+  let sw=availW, sh=sw/ar;
+  if(!mobile && sh>availH){ sh=availH; sw=sh*ar; } // desktop: also fit height
+  stage.style.width=sw+"px"; stage.style.height=sh+"px";
+  // image fills crop
+  img.src=meta.image;
+  img.alt=`${curRegion.name} · ${curView.label}`;
+  img.style.width=(100/(c.w/100))+"%";
+  img.style.height=(100/(c.h/100))+"%";
+  img.style.left=(-(c.x)/(c.w))*100+"%";
+  img.style.top=(-(c.y)/(c.h))*100+"%";
+
+  // masks (cover leftover printed text in test mode)
+  [...imgspace.querySelectorAll(".mask")].forEach(e=>e.remove());
+  if(testing && meta.masks){
+    meta.masks.forEach(m=>{
+      const mx=(m.x-c.x)/c.w*100, my=(m.y-c.y)/c.h*100, mw=m.w/c.w*100, mh=m.h/c.h*100;
+      const el=document.createElement("div"); el.className="mask";
+      el.style.cssText=`position:absolute;left:${mx}%;top:${my}%;width:${mw}%;height:${mh}%;background:${m.c||'#ffffff'};z-index:3`;
+      imgspace.appendChild(el);
+    });
+  }
+
+  // dots
+  [...imgspace.querySelectorAll(".dot,.tip")].forEach(e=>e.remove());
+  points.forEach((p,idx)=>{
+    // map to view coords
+    const vx=(p.x-c.x)/c.w*100, vy=(p.y-c.y)/c.h*100;
+    if(testing && (vx<0||vx>100||vy<0||vy>100)) return; // outside crop
+    const d=document.createElement("div"); d.className="dot"; d.style.left=vx+"%"; d.style.top=vy+"%";
+    d.dataset.idx=idx;
+    if(mode!=="learn"){ const n=document.createElement("span"); n.className="num"; n.textContent=idx+1; d.appendChild(n); }
+    const rd = done[viewKey()]||{};
+    if(mode==="test" && rd[idx]) d.classList.add("answered");
+    imgspace.appendChild(d);
+
+    if(mode==="learn"){
+      d.addEventListener("mouseenter",()=>showTip(d,p.name,vx,vy));
+      d.addEventListener("mouseleave",clearTip);
+      d.addEventListener("click",()=>{showTip(d,p.name,vx,vy);});
+    } else if(mode==="test"){
+      d.addEventListener("click",()=>testClick(idx,d,vx,vy,p.name));
+    } else { // edit
+      enableDrag(d,idx,c);
+    }
+  });
+  if(mode==="edit") setupEditAdd(c);
+  else stage.onclick=null;
+
+  buildList();
+  updateScore();
+  if(mode==="test" && points.length) startQuizIfNeeded();
+  else {
+    quizbar.classList.remove("show");
+    quiz=null;
+  }
+}
+
+function showTip(d,txt,vx,vy){ clearTip(); const t=document.createElement("div"); t.className="tip"; t.textContent=txt; t.style.left=vx+"%"; t.style.top=vy+"%"; imgspace.appendChild(t); }
+function clearTip(){ const t=imgspace.querySelector(".tip"); if(t)t.remove(); }
+
+// ---------- test / quiz ----------
+function startQuizIfNeeded(){
+  if(!quiz){ newQuiz(); }
+  quizbar.classList.add("show");
+  paintQuiz();
+}
+function newQuiz(){
+  const order=activePoints().map((_,i)=>i);
+  // shuffle
+  for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+  quiz={order,pos:0,correct:0,total:order.length,answered:{}};
+}
+function curQuizIdx(){ return quiz? quiz.order[quiz.pos] : -1; }
+function paintQuiz(){
+  if(!quiz) return;
+  if(quiz.pos>=quiz.order.length){ $("#quizname").textContent="✓ 全部完成！"; $("#quizprog").textContent=`得分 ${quiz.correct}/${quiz.total}`; return; }
+  $("#quizname").textContent=activePoints()[curQuizIdx()].name;
+  $("#quizprog").textContent=`${quiz.pos+1}/${quiz.order.length} · 已答对 ${quiz.correct}`;
+}
+function testClick(idx,d,vx,vy,name){
+  // always reveal name
+  showTip(d,name,vx,vy); setTimeout(clearTip,1400);
+  if(!quiz||quiz.pos>=quiz.order.length) { markDone(idx); return; }
+  const target=curQuizIdx();
+  if(idx===target){
+    d.classList.add("answered"); quiz.correct++; markDone(idx);
+    quiz.pos++; paintQuiz();
+  } else {
+    d.classList.add("wrong"); setTimeout(()=>d.classList.remove("wrong"),600);
+  }
+}
+function markDone(idx){ const k=viewKey(); done[k]=done[k]||{}; done[k][idx]=true; localStorage.setItem(LS_DONE,JSON.stringify(done)); updateScore(); buildList(); }
+$("#quizSkip").onclick=()=>{ if(quiz&&quiz.pos<quiz.order.length){ quiz.pos++; paintQuiz(); } };
+$("#quizRestart").onclick=()=>{ newQuiz(); paintQuiz(); render(); };
+$("#resetTest").onclick=()=>{ if(confirm("清空本图测试进度？")){ done[viewKey()]={}; localStorage.setItem(LS_DONE,JSON.stringify(done)); quiz=null; render(); } };
+
+function updateScore(){
+  const rd=done[viewKey()]||{}; const n=Object.keys(rd).length; const tot=activePoints().length;
+  scoreEl.innerHTML=`本图掌握 <b>${n}</b> / ${tot}`;
+}
+
+// ---------- list ----------
+function buildList(){
+  const points = activePoints();
+  $("#asideTitle").textContent=`结构清单 · ${curRegion.name} · ${curView.label} (${points.length})`;
+  listEl.innerHTML="";
+  const rd=done[viewKey()]||{};
+  if(!points.length){
+    const empty=document.createElement("div");
+    empty.className="li";
+    empty.style.cursor="default";
+    empty.innerHTML=`<span class="b">—</span><span class="nm">本图暂无测试点，可在编辑模式手动添加。</span>`;
+    listEl.appendChild(empty);
+    return;
+  }
+  points.forEach((p,idx)=>{
+    const li=document.createElement("div"); li.className="li"+(rd[idx]?" done":"");
+    const revealed = mode==="learn" || rd[idx] || li.dataset.rev;
+    li.innerHTML=`<span class="b">${idx+1}</span><span class="nm">${(mode==='learn'||rd[idx])?p.name:'？'}</span>`;
+    li.onclick=()=>{ // flash the dot
+      const dot=imgspace.querySelector(`.dot[data-idx="${idx}"]`);
+      if(dot){ dot.classList.add("sel"); setTimeout(()=>dot.classList.remove("sel"),700);
+        const nm=li.querySelector(".nm"); nm.textContent=p.name; }
+    };
+    listEl.appendChild(li);
+  });
+}
+$("#revealAll").onclick=()=>{ const points=activePoints(); [...listEl.querySelectorAll(".li .nm")].forEach((n,i)=>{ if(points[i]) n.textContent=points[i].name; }); };
+$("#hideAll").onclick=()=>{ const rd=done[viewKey()]||{}; const points=activePoints(); [...listEl.querySelectorAll(".li .nm")].forEach((n,i)=>{ if(points[i]&&mode!=='learn'&&!rd[i]) n.textContent='？'; }); };
+
+// ---------- edit mode ----------
+function enableDrag(d,idx,c){
+  d.style.cursor="grab";
+  let dragging=false,moved=false,sx=0,sy=0;
+  d.addEventListener("pointerdown",e=>{
+    e.stopPropagation();
+    dragging=true; moved=false; sx=e.clientX; sy=e.clientY;
+    try{ d.setPointerCapture(e.pointerId); }catch(_){}
+    d.style.cursor="grabbing";
+  });
+  d.addEventListener("pointermove",e=>{
+    if(!dragging)return;
+    if(Math.abs(e.clientX-sx)>4||Math.abs(e.clientY-sy)>4) moved=true;
+    const r=imgspace.getBoundingClientRect();
+    let vx=(e.clientX-r.left)/r.width*100, vy=(e.clientY-r.top)/r.height*100;
+    // view->orig
+    const ox=c.x+vx/100*c.w, oy=c.y+vy/100*c.h;
+    curView.points[idx].x=Math.max(0,Math.min(100,+ox.toFixed(2)));
+    curView.points[idx].y=Math.max(0,Math.min(100,+oy.toFixed(2)));
+    d.style.left=vx+"%"; d.style.top=vy+"%";
+  });
+  d.addEventListener("pointerup",()=>{ if(dragging){ dragging=false; d.style.cursor="grab"; if(moved) saveEdits(); } });
+  d.addEventListener("click",e=>{ e.stopPropagation(); if(moved)return; editPoint(idx); });
+}
+function editPoint(idx){
+  const p=curView.points[idx];
+  const nn=prompt("结构名称（留空=删除该点）：",p.name);
+  if(nn===null)return;
+  if(nn.trim()===""){ curView.points.splice(idx,1); } else { p.name=nn.trim(); }
+  saveEdits(); render();
+}
+function setupEditAdd(c){
+  stage.onclick=e=>{
+    if(e.target.classList.contains("dot"))return;
+    const r=imgspace.getBoundingClientRect();
+    let vx=(e.clientX-r.left)/r.width*100, vy=(e.clientY-r.top)/r.height*100;
+    if(vx<0||vx>100||vy<0||vy>100)return;
+    const ox=c.x+vx/100*c.w, oy=c.y+vy/100*c.h;
+    const nn=prompt("新结构名称：","");
+    if(nn&&nn.trim()){ curView.points.push({x:+ox.toFixed(2),y:+oy.toFixed(2),name:nn.trim()}); saveEdits(); render(); }
+  };
+}
+function saveEdits(){ edits[viewKey()]=curView.points; localStorage.setItem(LS_EDITS,JSON.stringify(edits)); }
+
+// ---------- export ----------
+$("#exportBtn").onclick=()=>{
+  const regions=DATA.regions.map(r=>({
+    id:r.id,
+    name:r.name,
+    views:r.views.map(v=>({
+      id:v.id,
+      label:v.label,
+      image:v.image,
+      w:v.w,
+      h:v.h,
+      editImage:v.editImage,
+      editW:v.editW,
+      editH:v.editH,
+      editCrop:v.editCrop,
+      editMasks:v.editMasks,
+      practiceImage:v.practiceImage,
+      practiceW:v.practiceW,
+      practiceH:v.practiceH,
+      practiceCrop:v.practiceCrop,
+      practiceMasks:v.practiceMasks,
+      practicePoints:v.practicePoints,
+      crop:v.crop,
+      masks:v.masks,
+      points:v.points
+    }))
+  }));
+  const out="window.ANATOMY_DATA = "+JSON.stringify({regions,gallery:DATA.gallery},null,2)+";";
+  const blob=new Blob([out],{type:"text/javascript"}); const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="data.js"; a.click();
+  alert("已下载 data.js。用它替换项目里的 data.js 即可永久保存你的修改。");
+};
+
+// ---------- gallery ----------
+const gal=$("#gallery");
+DATA.gallery.forEach(g=>{
+  const c=document.createElement("div"); c.className="card";
+  c.innerHTML=`<img loading="lazy" src="${g.file}"><div class="cap">${g.title}</div>`;
+  c.onclick=()=>{ $("#lbimg").src=g.file; $("#lightbox").classList.add("show"); };
+  gal.appendChild(c);
+});
+$("#lbx").onclick=()=>$("#lightbox").classList.remove("show");
+$("#lightbox").onclick=e=>{ if(e.target.id==="lightbox") $("#lightbox").classList.remove("show"); };
+
+// init  (URL params for quick preview: ?region=foot&mode=learn)
+const qp=new URLSearchParams(location.search);
+if(qp.get("region")){ const r=DATA.regions.find(x=>x.id===qp.get("region")); if(r){ curRegion=r; curView=r.views[0]; const ti=DATA.regions.indexOf(r); setTab(tabs.children[ti]); } }
+if(qp.get("view")){ const v=curRegion.views.find(x=>x.id===qp.get("view")); if(v) curView=v; }
+if(qp.get("mode")){ mode=qp.get("mode"); document.querySelectorAll("#modeseg button").forEach(x=>x.classList.toggle("on",x.dataset.mode===mode)); }
+window.addEventListener("resize",()=>{ if($("#gallery").classList.contains("show"))return; render(); });
+img.onload=()=>{ /* keep sizing correct after load */ };
+renderViewbar();
+render();
+</script>
+</body>
+</html>
