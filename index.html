@@ -35,6 +35,7 @@
            white-space:nowrap;flex:0 0 auto}
   .viewbtn:hover{color:var(--txt);border-color:var(--accent)}
   .viewbtn.on{background:var(--accent);border-color:var(--accent);color:#04121f;font-weight:700}
+  .viewbtn:disabled{opacity:.5;cursor:not-allowed}
   .seg{display:inline-flex;background:var(--panel2);border-radius:9px;padding:3px}
   .seg button{border:0;background:transparent;color:var(--mut);padding:6px 14px;border-radius:7px;
               cursor:pointer;font-size:14px}
@@ -64,6 +65,8 @@
   .dot .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
             font-size:var(--dot-font-size);font-weight:700;color:#241a00}
   .dot.answered{background:var(--good);box-shadow:0 0 0 var(--dot-ring) rgba(55,211,155,.35)}
+  .dot.answered.ghost{opacity:.24;pointer-events:none;filter:saturate(.7);--dot-scale:.88}
+  .dot.answered.ghost .num{opacity:.75}
   .dot.wrong{background:var(--bad)}
   .dot.sel{--dot-scale:1.35;z-index:7}
 
@@ -82,9 +85,11 @@
   .li:hover{background:var(--panel2)}
   .li .b{width:20px;height:20px;border-radius:50%;background:var(--panel2);color:var(--mut);
          display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+  .li .meta{margin-left:auto;color:var(--mut);font-size:12px}
   .li.done .b{background:var(--good);color:#04121f}
   .li.done{color:var(--mut);text-decoration:line-through}
   .li.chosen{background:var(--accent);color:#04121f;font-weight:700}
+  .li.chosen .meta{color:#04121f}
   .asidebtns{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
 
   /* quiz prompt bar (test mode) */
@@ -201,6 +206,7 @@
 const DATA = window.ANATOMY_DATA;
 const LS_EDITS = "anatomy_edits_v11";
 const LS_DONE  = "anatomy_done_v11";
+const LS_MISTAKES = "anatomy_mistakes_v11";
 const LS_OLD_EDITS = "anatomy_edits_v1";
 const LS_OLD_DONE  = "anatomy_done_v1";
 
@@ -235,6 +241,7 @@ function viewKey(region=curRegion,view=curView){ return `${region.id}:${view.id}
 
 let edits = safeJson(localStorage.getItem(LS_EDITS), {});
 let done = safeJson(localStorage.getItem(LS_DONE), {});
+let mistakes = safeJson(localStorage.getItem(LS_MISTAKES), {});
 const oldEdits = safeJson(localStorage.getItem(LS_OLD_EDITS), {});
 const oldDone = safeJson(localStorage.getItem(LS_OLD_DONE), {});
 
@@ -250,11 +257,13 @@ DATA.regions.forEach(region=>{
 });
 localStorage.setItem(LS_EDITS,JSON.stringify(edits));
 localStorage.setItem(LS_DONE,JSON.stringify(done));
+localStorage.setItem(LS_MISTAKES,JSON.stringify(mistakes));
 
 let curRegion = DATA.regions[0];
 let curView = curRegion.views[0];
 let mode = "test";
 let quiz = null; // {order:[idx...], pos, correct, total}
+let learnSession = null; // {regionId, signature, targets:[{key,name,steps:[...]}], targetPos, stepPos}
 
 function activeMeta(){
   const editing = mode === "edit" && curView.editImage;
@@ -269,8 +278,107 @@ function activeMeta(){
   };
 }
 function activePoints(){ return activeMeta().points; }
+function currentMistakes(){ return mistakes[viewKey()] || {}; }
+function mistakeCount(idx){ return currentMistakes()[idx] || 0; }
+function labelWithMistakes(name, idx){
+  const count = mistakeCount(idx);
+  return count>0 ? `${name}（错${count}次）` : name;
+}
+function viewPoints(view, usePractice=true){
+  const practice = usePractice && view.practiceImage;
+  return practice ? (view.practicePoints || view.points || []) : (view.points || []);
+}
 function isFullbodyView(view=curView){
   return !!view && (String(view.id||"").startsWith("fullbody-") || String(view.label||"").includes("全身"));
+}
+function normalizeLearnName(name=""){
+  return String(name || "").replace(/[（(].*?[）)]/g,"").trim();
+}
+function buildLearnTargets(region=curRegion){
+  const groups = [];
+  const map = new Map();
+  region.views.forEach(view=>{
+    viewPoints(view, true).forEach((point, pointIdx)=>{
+      const key = point.learnKey || normalizeLearnName(point.name);
+      if(!key) return;
+      if(!map.has(key)){
+        const target = {key, name:key, steps:[]};
+        map.set(key, target);
+        groups.push(target);
+      }
+      map.get(key).steps.push({
+        viewId:view.id,
+        viewLabel:view.label,
+        pointIdx,
+        fullName:point.name
+      });
+    });
+  });
+  return groups;
+}
+function learnSignature(targets){
+  return targets.map(target=>`${target.key}:${target.steps.map(step=>`${step.viewId}#${step.pointIdx}`).join(",")}`).join("|");
+}
+function currentLearnTarget(){
+  return learnSession ? learnSession.targets[learnSession.targetPos] : null;
+}
+function currentLearnStep(){
+  const target = currentLearnTarget();
+  return target ? target.steps[learnSession.stepPos] : null;
+}
+function syncLearnView(){
+  if(mode !== "learn") return;
+  const step = currentLearnStep();
+  if(!step) return;
+  const targetView = curRegion.views.find(view=>view.id === step.viewId);
+  if(targetView) curView = targetView;
+}
+function ensureLearnSession(force=false){
+  const targets = buildLearnTargets(curRegion);
+  const signature = learnSignature(targets);
+  if(force || !learnSession || learnSession.regionId !== curRegion.id || learnSession.signature !== signature){
+    learnSession = {
+      regionId: curRegion.id,
+      signature,
+      targets,
+      targetPos: 0,
+      stepPos: 0
+    };
+  } else {
+    learnSession.targets = targets;
+    learnSession.signature = signature;
+    if(learnSession.targetPos > targets.length) learnSession.targetPos = targets.length;
+    const target = targets[learnSession.targetPos];
+    if(!target) learnSession.stepPos = 0;
+    else if(learnSession.stepPos >= target.steps.length) learnSession.stepPos = Math.max(0, target.steps.length - 1);
+  }
+  syncLearnView();
+}
+function advanceLearn(){
+  if(!learnSession) return;
+  const target = currentLearnTarget();
+  if(!target) return;
+  if(learnSession.stepPos < target.steps.length - 1){
+    learnSession.stepPos++;
+  } else {
+    learnSession.targetPos++;
+    learnSession.stepPos = 0;
+  }
+  syncLearnView();
+}
+function revealLearnAnswer(){
+  const step = currentLearnStep();
+  if(!step) return;
+  const dot = imgspace.querySelector(`.dot[data-idx="${step.pointIdx}"]`);
+  if(!dot) return;
+  const point = activePoints()[step.pointIdx];
+  if(!point) return;
+  dot.classList.add("sel");
+  showTip(dot, point.name, parseFloat(dot.style.left), parseFloat(dot.style.top));
+  setTimeout(()=>{
+    dot.classList.remove("sel");
+    clearTip();
+  }, 1400);
 }
 
 const $ = s=>document.querySelector(s);
@@ -316,12 +424,13 @@ document.querySelectorAll("#modeseg button").forEach(b=>{
     render();
   };
 });
-const HINTS={learn:"鼠标移到圆点上即可看名称。",test:"按提示找结构，或直接点圆点作答。",edit:"编辑圆点位置与名称。"};
+const HINTS={learn:"按提示依次找结构，同一点位会在不同图片中连续出现。",test:"按提示找结构，或直接点圆点作答。",edit:"编辑圆点位置与名称。"};
 
 function selectRegion(r){
   curRegion=r;
   curView=r.views[0];
   quiz=null;
+  learnSession=null;
 }
 function selectView(view){
   curView=view;
@@ -331,23 +440,33 @@ function selectView(view){
 }
 function renderViewbar(){
   viewbar.innerHTML="";
+  const learnStep = mode === "learn" ? currentLearnStep() : null;
   curRegion.views.forEach(view=>{
     const b=document.createElement("button");
     b.className="viewbtn"+(view===curView?" on":"");
     b.type="button";
     b.textContent=view.label;
-    b.onclick=()=>selectView(view);
+    if(mode === "learn" && learnStep){
+      b.disabled = true;
+      b.title = "学习模式会按当前点位自动切换图片";
+    } else {
+      b.onclick=()=>selectView(view);
+    }
     viewbar.appendChild(b);
   });
 }
 
 // ---------- render ----------
 function render(){
+  if(mode==="learn") ensureLearnSession();
   $("#modehint").textContent=HINTS[mode];
+  renderViewbar();
   stage.className="stage "+mode;
   const testing = (mode==="test");
+  const fullbody = isFullbodyView();
   const meta = activeMeta();
   const points = meta.points;
+  const rd = done[viewKey()]||{};
   // geometry
   const c = testing ? meta.crop : {x:0,y:0,w:100,h:100};
   const pxW = meta.w*(c.w/100), pxH = meta.h*(c.h/100);
@@ -363,11 +482,16 @@ function render(){
     const viewbarH = viewbar.offsetParent ? viewbar.offsetHeight : 0;
     const quizbarH = mode==="test" && points.length ? Math.max(quizbar.offsetHeight, 54) : 0;
     const reservedH = headerH + modebarH + viewbarH + quizbarH + 92;
-    const mobileMaxH = Math.max(220, Math.min(window.innerHeight*0.52, window.innerHeight-reservedH));
+    const mobileMaxH = Math.max(220, Math.min(window.innerHeight*(fullbody ? 0.68 : 0.52), window.innerHeight-reservedH));
     if(sh>mobileMaxH){ sh=mobileMaxH; sw=sh*ar; }
   } else if(sh>availH){
     sh=availH; sw=sh*ar;
   } // desktop: also fit height
+  if(fullbody){
+    const zoom = mobile ? 1.12 : 1.16;
+    sw *= zoom;
+    sh *= zoom;
+  }
   stage.style.width=sw+"px"; stage.style.height=sh+"px";
   const pointDensity = points.length / Math.max((sw*sh)/10000,1);
   let dotSize = mobile ? 18 : 20;
@@ -375,11 +499,7 @@ function render(){
     const densityPenalty = Math.min(3.5, Math.max(0, pointDensity-1.6));
     dotSize = Math.max(14, Math.min(18, sw/19 - densityPenalty));
   }
-  const fullbody = isFullbodyView();
-  if(fullbody){
-    dotSize = Math.max(9, +(dotSize*(2/3)).toFixed(2));
-  }
-  const learnDotFloor = fullbody ? 7 : (mobile ? 10 : 12);
+  const learnDotFloor = mobile ? 10 : 12;
   const learnDotSize = Math.max(learnDotFloor, dotSize-(mobile ? 4 : 5));
   const dotFontSize = Math.max(9, Math.round(dotSize*0.5));
   const dotBorder = mobile ? 1.5 : 2;
@@ -417,14 +537,14 @@ function render(){
     const d=document.createElement("div"); d.className="dot"; d.style.left=vx+"%"; d.style.top=vy+"%";
     d.dataset.idx=idx;
     if(mode!=="learn"){ const n=document.createElement("span"); n.className="num"; n.textContent=idx+1; d.appendChild(n); }
-    const rd = done[viewKey()]||{};
-    if(mode==="test" && rd[idx]) d.classList.add("answered");
+    if(mode==="test" && rd[idx]){
+      d.classList.add("answered");
+      d.classList.add("ghost");
+    }
     imgspace.appendChild(d);
 
     if(mode==="learn"){
-      d.addEventListener("mouseenter",()=>showTip(d,p.name,vx,vy));
-      d.addEventListener("mouseleave",clearTip);
-      d.addEventListener("click",()=>{showTip(d,p.name,vx,vy);});
+      d.addEventListener("click",()=>learnClick(idx,d,vx,vy,p.name));
     } else if(mode==="test"){
       d.addEventListener("click",()=>testClick(idx,d,vx,vy,p.name));
     } else { // edit
@@ -436,15 +556,56 @@ function render(){
 
   buildList();
   updateScore();
+  syncActionButtons();
   if(mode==="test" && points.length) startQuizIfNeeded();
+  else if(mode==="learn" && learnSession && learnSession.targets.length) startLearnIfNeeded();
   else {
     quizbar.classList.remove("show");
-    quiz=null;
+    if(mode!=="learn") quiz=null;
   }
 }
 
 function showTip(d,txt,vx,vy){ clearTip(); const t=document.createElement("div"); t.className="tip"; t.textContent=txt; t.style.left=vx+"%"; t.style.top=vy+"%"; imgspace.appendChild(t); }
 function clearTip(){ const t=imgspace.querySelector(".tip"); if(t)t.remove(); }
+
+// ---------- learn ----------
+function startLearnIfNeeded(){
+  quizbar.classList.add("show");
+  paintLearn();
+}
+function paintLearn(){
+  if(!learnSession) return;
+  if(!learnSession.targets.length){
+    $("#quizname").textContent="本区暂无学习点";
+    $("#quizprog").textContent="";
+    return;
+  }
+  if(learnSession.targetPos>=learnSession.targets.length){
+    $("#quizname").textContent="✓ 本区已学完";
+    $("#quizprog").textContent=`完成 ${learnSession.targets.length}/${learnSession.targets.length}`;
+    return;
+  }
+  const target = currentLearnTarget();
+  const step = currentLearnStep();
+  $("#quizname").textContent=target.name;
+  $("#quizprog").textContent=`点位 ${learnSession.targetPos+1}/${learnSession.targets.length} · 图片 ${learnSession.stepPos+1}/${target.steps.length} · ${step.viewLabel}`;
+}
+function learnClick(idx,d,vx,vy,name){
+  const step = currentLearnStep();
+  if(!step || step.viewId !== curView.id) return;
+  showTip(d,name,vx,vy);
+  setTimeout(clearTip,1100);
+  if(idx===step.pointIdx){
+    d.classList.add("answered");
+    setTimeout(()=>{
+      advanceLearn();
+      render();
+    }, 320);
+  } else {
+    d.classList.add("wrong");
+    setTimeout(()=>d.classList.remove("wrong"),600);
+  }
+}
 
 // ---------- test / quiz ----------
 function startQuizIfNeeded(){
@@ -453,7 +614,8 @@ function startQuizIfNeeded(){
   paintQuiz();
 }
 function newQuiz(){
-  const order=activePoints().map((_,i)=>i);
+  const rd=done[viewKey()]||{};
+  const order=activePoints().map((_,i)=>i).filter(i=>!rd[i]);
   // shuffle
   for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
   quiz={order,pos:0,correct:0,total:order.length,answered:{}};
@@ -461,6 +623,7 @@ function newQuiz(){
 function curQuizIdx(){ return quiz? quiz.order[quiz.pos] : -1; }
 function paintQuiz(){
   if(!quiz) return;
+  if(quiz.total===0){ $("#quizname").textContent="✓ 本图已全部掌握"; $("#quizprog").textContent="无需再测"; return; }
   if(quiz.pos>=quiz.order.length){ $("#quizname").textContent="✓ 全部完成！"; $("#quizprog").textContent=`得分 ${quiz.correct}/${quiz.total}`; return; }
   $("#quizname").textContent=activePoints()[curQuizIdx()].name;
   $("#quizprog").textContent=`${quiz.pos+1}/${quiz.order.length} · 已答对 ${quiz.correct}`;
@@ -468,31 +631,77 @@ function paintQuiz(){
 function testClick(idx,d,vx,vy,name){
   // always reveal name
   showTip(d,name,vx,vy); setTimeout(clearTip,1400);
+  if(done[viewKey()]?.[idx]) return;
   if(!quiz||quiz.pos>=quiz.order.length) { markDone(idx); return; }
   const target=curQuizIdx();
   if(idx===target){
-    d.classList.add("answered"); quiz.correct++; markDone(idx);
+    d.classList.add("answered","ghost"); quiz.correct++; markDone(idx);
     quiz.pos++; paintQuiz();
   } else {
+    addMistake(target);
     d.classList.add("wrong"); setTimeout(()=>d.classList.remove("wrong"),600);
   }
 }
 function markDone(idx){ const k=viewKey(); done[k]=done[k]||{}; done[k][idx]=true; localStorage.setItem(LS_DONE,JSON.stringify(done)); updateScore(); buildList(); }
-$("#quizSkip").onclick=()=>{ if(quiz&&quiz.pos<quiz.order.length){ quiz.pos++; paintQuiz(); } };
-$("#quizRestart").onclick=()=>{ newQuiz(); paintQuiz(); render(); };
-$("#resetTest").onclick=()=>{ if(confirm("清空本图测试进度？")){ done[viewKey()]={}; localStorage.setItem(LS_DONE,JSON.stringify(done)); quiz=null; render(); } };
+function addMistake(idx){
+  if(idx<0) return;
+  const k=viewKey();
+  mistakes[k]=mistakes[k]||{};
+  mistakes[k][idx]=(mistakes[k][idx]||0)+1;
+  localStorage.setItem(LS_MISTAKES,JSON.stringify(mistakes));
+  buildList();
+}
+function syncActionButtons(){
+  $("#quizSkip").textContent = mode==="learn" ? "显示答案" : "跳过/不会";
+  $("#quizRestart").textContent = mode==="learn" ? "重学本区" : "重新开始";
+  $("#revealAll").textContent = mode==="learn" ? "显示答案" : "显示全部";
+  $("#hideAll").textContent = mode==="learn" ? "重学本区" : "隐藏全部";
+}
+$("#quizSkip").onclick=()=>{
+  if(mode==="learn"){ revealLearnAnswer(); return; }
+  if(quiz&&quiz.pos<quiz.order.length){ quiz.pos++; paintQuiz(); }
+};
+$("#quizRestart").onclick=()=>{
+  if(mode==="learn"){ ensureLearnSession(true); render(); return; }
+  newQuiz(); paintQuiz(); render();
+};
+$("#resetTest").onclick=()=>{
+  if(mode==="learn"){
+    if(confirm("从本区第一个点位重新开始？")){ ensureLearnSession(true); render(); }
+    return;
+  }
+  if(confirm("清空本图测试进度与错题统计？")){
+    done[viewKey()]={};
+    mistakes[viewKey()]={};
+    localStorage.setItem(LS_DONE,JSON.stringify(done));
+    localStorage.setItem(LS_MISTAKES,JSON.stringify(mistakes));
+    quiz=null;
+    render();
+  }
+};
 
 function updateScore(){
+  if(mode==="learn"){
+    const total = learnSession ? learnSession.targets.length : 0;
+    const doneCount = learnSession ? Math.min(learnSession.targetPos, total) : 0;
+    scoreEl.innerHTML=`本区进度 <b>${doneCount}</b> / ${total}`;
+    return;
+  }
   const rd=done[viewKey()]||{}; const n=Object.keys(rd).length; const tot=activePoints().length;
   scoreEl.innerHTML=`本图掌握 <b>${n}</b> / ${tot}`;
 }
 
 // ---------- list ----------
 function buildList(){
+  if(mode==="learn"){
+    buildLearnList();
+    return;
+  }
   const points = activePoints();
   $("#asideTitle").textContent=`结构清单 · ${curRegion.name} · ${curView.label} (${points.length})`;
   listEl.innerHTML="";
   const rd=done[viewKey()]||{};
+  const currentIdx = mode==="test" && quiz && quiz.pos<quiz.order.length ? curQuizIdx() : -1;
   if(!points.length){
     const empty=document.createElement("div");
     empty.className="li";
@@ -501,20 +710,67 @@ function buildList(){
     listEl.appendChild(empty);
     return;
   }
-  points.forEach((p,idx)=>{
-    const li=document.createElement("div"); li.className="li"+(rd[idx]?" done":"");
-    const revealed = mode==="learn" || rd[idx] || li.dataset.rev;
-    li.innerHTML=`<span class="b">${idx+1}</span><span class="nm">${(mode==='learn'||rd[idx])?p.name:'？'}</span>`;
+  const order = points.map((_,idx)=>idx).sort((a,b)=>{
+    const pa = rd[a] ? 1 : 0;
+    const pb = rd[b] ? 1 : 0;
+    if(pa!==pb) return pa-pb;
+    return a-b;
+  });
+  order.forEach(idx=>{
+    const p=points[idx];
+    const li=document.createElement("div");
+    li.dataset.idx=idx;
+    li.className="li"+(rd[idx]?" done":"")+(idx===currentIdx?" chosen":"");
+    li.innerHTML=`<span class="b">${idx+1}</span><span class="nm">${rd[idx]?labelWithMistakes(p.name,idx):labelWithMistakes('？',idx)}</span>`;
     li.onclick=()=>{ // flash the dot
       const dot=imgspace.querySelector(`.dot[data-idx="${idx}"]`);
       if(dot){ dot.classList.add("sel"); setTimeout(()=>dot.classList.remove("sel"),700);
-        const nm=li.querySelector(".nm"); nm.textContent=p.name; }
+        const nm=li.querySelector(".nm"); nm.textContent=labelWithMistakes(p.name,idx); }
     };
     listEl.appendChild(li);
   });
 }
-$("#revealAll").onclick=()=>{ const points=activePoints(); [...listEl.querySelectorAll(".li .nm")].forEach((n,i)=>{ if(points[i]) n.textContent=points[i].name; }); };
-$("#hideAll").onclick=()=>{ const rd=done[viewKey()]||{}; const points=activePoints(); [...listEl.querySelectorAll(".li .nm")].forEach((n,i)=>{ if(points[i]&&mode!=='learn'&&!rd[i]) n.textContent='？'; }); };
+function buildLearnList(){
+  const targets = learnSession ? learnSession.targets : [];
+  $("#asideTitle").textContent=`学习顺序 · ${curRegion.name} (${targets.length})`;
+  listEl.innerHTML="";
+  if(!targets.length){
+    const empty=document.createElement("div");
+    empty.className="li";
+    empty.style.cursor="default";
+    empty.innerHTML=`<span class="b">—</span><span class="nm">本区暂无学习点，可在编辑模式手动添加。</span>`;
+    listEl.appendChild(empty);
+    return;
+  }
+  targets.forEach((target,idx)=>{
+    const li=document.createElement("div");
+    const doneTarget = learnSession && idx < learnSession.targetPos;
+    const currentTarget = learnSession && idx === learnSession.targetPos && learnSession.targetPos < targets.length;
+    const stepDone = currentTarget ? learnSession.stepPos : (doneTarget ? target.steps.length : 0);
+    li.className = "li" + (doneTarget ? " done" : "") + (currentTarget ? " chosen" : "");
+    li.innerHTML=`<span class="b">${idx+1}</span><span class="nm">${target.name}</span><span class="meta">${stepDone}/${target.steps.length}</span>`;
+    li.onclick=()=>{ if(currentTarget) revealLearnAnswer(); };
+    listEl.appendChild(li);
+  });
+}
+$("#revealAll").onclick=()=>{
+  if(mode==="learn"){ revealLearnAnswer(); return; }
+  const points=activePoints();
+  [...listEl.querySelectorAll(".li")].forEach(li=>{
+    const idx=Number(li.dataset.idx);
+    const nm=li.querySelector(".nm");
+    if(points[idx] && nm) nm.textContent=labelWithMistakes(points[idx].name,idx);
+  });
+};
+$("#hideAll").onclick=()=>{
+  if(mode==="learn"){ ensureLearnSession(true); render(); return; }
+  const rd=done[viewKey()]||{}; const points=activePoints();
+  [...listEl.querySelectorAll(".li")].forEach(li=>{
+    const idx=Number(li.dataset.idx);
+    const nm=li.querySelector(".nm");
+    if(points[idx] && !rd[idx] && nm) nm.textContent=labelWithMistakes('？',idx);
+  });
+};
 
 // ---------- edit mode ----------
 function enableDrag(d,idx,c){
@@ -558,7 +814,11 @@ function setupEditAdd(c){
     if(nn&&nn.trim()){ curView.points.push({x:+ox.toFixed(2),y:+oy.toFixed(2),name:nn.trim()}); saveEdits(); render(); }
   };
 }
-function saveEdits(){ edits[viewKey()]=curView.points; localStorage.setItem(LS_EDITS,JSON.stringify(edits)); }
+function saveEdits(){
+  edits[viewKey()]=curView.points;
+  localStorage.setItem(LS_EDITS,JSON.stringify(edits));
+  learnSession=null;
+}
 
 // ---------- export ----------
 $("#exportBtn").onclick=()=>{
