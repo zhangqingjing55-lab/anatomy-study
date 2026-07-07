@@ -651,6 +651,11 @@ function addMistake(idx){
   localStorage.setItem(LS_MISTAKES,JSON.stringify(mistakes));
   buildList();
 }
+function isViewFullyDone(){
+  const total = activePoints().length;
+  if(!total) return false;
+  return Object.keys(done[viewKey()]||{}).length >= total;
+}
 function syncActionButtons(){
   $("#quizSkip").textContent = mode==="learn" ? "显示答案" : "跳过/不会";
   $("#quizRestart").textContent = mode==="learn" ? "重学本区" : "重新开始";
@@ -663,6 +668,10 @@ $("#quizSkip").onclick=()=>{
 };
 $("#quizRestart").onclick=()=>{
   if(mode==="learn"){ ensureLearnSession(true); render(); return; }
+  if(isViewFullyDone()){
+    done[viewKey()]={};
+    localStorage.setItem(LS_DONE,JSON.stringify(done));
+  }
   newQuiz(); paintQuiz(); render();
 };
 $("#resetTest").onclick=()=>{
