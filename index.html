@@ -27,6 +27,12 @@
 
   .modebar{padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);
            display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .searchbar{padding:8px 16px;background:#101726;border-bottom:1px solid var(--line);
+             display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .searchbar input{flex:1;min-width:220px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);
+                   border-radius:10px;padding:8px 12px;font-size:14px;outline:none}
+  .searchbar input:focus{border-color:var(--accent)}
+  .searchbar .searchmeta{font-size:12px;color:var(--mut)}
   .viewbar{padding:7px 16px;background:#121928;border-bottom:1px solid var(--line);
            display:flex;gap:7px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .viewbar:empty{display:none}
@@ -88,6 +94,9 @@
   .li .meta{margin-left:auto;color:var(--mut);font-size:12px}
   .li.done .b{background:var(--good);color:#04121f}
   .li.done{color:var(--mut);text-decoration:line-through}
+  .li.info{display:block;cursor:default;line-height:1.45}
+  .li.info:hover{background:transparent}
+  .li .subinfo{display:block;color:var(--mut);font-size:12px;margin-top:4px}
   .li.chosen{background:var(--accent);color:#04121f;font-weight:700}
   .li.chosen .meta{color:#04121f}
   .asidebtns{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
@@ -110,10 +119,6 @@
   .lightbox img{max-width:100%;max-height:100%;border-radius:8px}
   .lightbox .x{position:absolute;top:16px;right:20px;font-size:30px;color:#fff;cursor:pointer}
 
-  .editnote{display:none;position:absolute;left:10px;top:10px;background:#000c;padding:6px 10px;border-radius:8px;
-            font-size:12px;color:var(--dot);z-index:10;max-width:60%}
-  .edit .editnote{display:block}
-
   @media (max-width:760px){
     body{height:auto;min-height:100dvh;overflow:auto;-webkit-text-size-adjust:100%}
     header{padding:7px 10px 6px;gap:6px}
@@ -122,6 +127,8 @@
     .tabs{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 0 2px;gap:5px}
     .tab{flex:0 0 auto;padding:6px 11px;font-size:13px;border-radius:10px}
     .modebar{padding:7px 10px;gap:6px;align-items:flex-start}
+    .searchbar{padding:7px 10px;gap:7px}
+    .searchbar input{min-width:0;width:100%;font-size:13px;padding:8px 10px}
     .modebar .hint{display:none}
     .seg{width:100%;display:flex}
     .seg button{flex:1;padding:7px 8px;font-size:13px}
@@ -168,6 +175,11 @@
   <button class="btn mini" id="resetTest">重置进度</button>
 </div>
 
+<div class="searchbar" id="searchbar">
+  <input id="jointSearch" type="search" placeholder="检索结构，例如：掌指关节、虎口、髂前上嵴">
+  <span class="searchmeta" id="searchmeta">可检索结构位置与特征说明</span>
+</div>
+
 <div class="viewbar" id="viewbar"></div>
 
 <div class="quizbar" id="quizbar">
@@ -183,7 +195,6 @@
       <div class="imgspace" id="imgspace">
         <img id="mainimg" alt="">
       </div>
-      <div class="editnote">编辑模式：单击空白处新增圆点；拖动圆点调位置；点圆点可改名/删除。改完记得“导出数据”。</div>
     </div>
   </div>
   <div class="gallery" id="gallery"></div>
@@ -263,17 +274,33 @@ let curRegion = DATA.regions[0];
 let curView = curRegion.views[0];
 let mode = "test";
 let quiz = null; // {order:[idx...], pos, correct, total}
-let learnSession = null; // {regionId, signature, targets:[{key,name,steps:[...]}], targetPos, stepPos}
+let learnSession = null; // {regionId, signature, targets:[{key,name,steps:[...]}], completedKeys:{}, completedSteps:{}}
+const AUTO_PRACTICE_MASKS = {
+  "hand:hand-views":[{x:86,y:91,w:13,h:7,c:"#f8f8f8"}],
+  "torso:torso-shoulder-chest":[{x:86,y:91,w:13,h:7,c:"#fcfcfb"}],
+  "foot:foot-dorsum-photo":[{x:86,y:91,w:13,h:7,c:"#fbfcf8"}],
+  "hand:hand-wrist-small":[{x:86,y:91,w:13,h:7,c:"#fcfcfa"}],
+  "lowerlimb:lowerleg-medial-ankle":[{x:86,y:91,w:13,h:7,c:"#fcfcf9"}],
+  "foot:foot-bone-landmarks":[{x:86,y:91,w:13,h:7,c:"#fafafa"}],
+  "upperlimb:upperlimb-flexed":[{x:86,y:90,w:13,h:8,c:"#3f3a30"}],
+  "lowerlimb:lowerleg-front":[{x:86,y:91,w:13,h:7,c:"#ffffff"}],
+  "upperlimb:forearm-bone":[{x:86,y:91,w:13,h:7,c:"#fcfcfb"}],
+  "torso:torso-front-class":[{x:86,y:92,w:13,h:7,c:"#565145"},{x:0,y:0,w:16,h:5,c:"#adbbca"}],
+  "lowerlimb:lowerleg-side-class":[{x:86,y:92,w:13,h:7,c:"#5c5c47"}],
+  "lowerlimb:lowerleg-front-class":[{x:86,y:92,w:13,h:7,c:"#5a5346"}],
+  "back:back-linedrawing":[{x:86,y:92,w:13,h:7,c:"#4d4b48"},{x:0,y:0,w:14,h:6,c:"#bfc0be"}]
+};
 
 function activeMeta(){
   const editing = mode === "edit" && curView.editImage;
   const practice = mode !== "edit" && curView.practiceImage;
+  const autoPracticeMasks = practice ? (AUTO_PRACTICE_MASKS[viewKey()] || []) : [];
   return {
     image: editing ? curView.editImage : (practice ? curView.practiceImage : curView.image),
     w: editing ? (curView.editW || curView.w) : (practice ? (curView.practiceW || curView.w) : curView.w),
     h: editing ? (curView.editH || curView.h) : (practice ? (curView.practiceH || curView.h) : curView.h),
     crop: editing ? (curView.editCrop || curView.crop || {x:0,y:0,w:100,h:100}) : (practice ? (curView.practiceCrop || curView.crop || {x:0,y:0,w:100,h:100}) : (curView.crop || {x:0,y:0,w:100,h:100})),
-    masks: editing ? (curView.editMasks || curView.masks) : (practice ? curView.practiceMasks : curView.masks),
+    masks: editing ? (curView.editMasks || curView.masks) : (practice ? ([...(curView.practiceMasks || curView.masks || []), ...autoPracticeMasks]) : curView.masks),
     points: practice ? (curView.practicePoints || curView.points || []) : (curView.points || [])
   };
 }
@@ -284,6 +311,38 @@ function labelWithMistakes(name, idx){
   const count = mistakeCount(idx);
   return count>0 ? `${name}（错${count}次）` : name;
 }
+function normalizeInfoKey(name=""){
+  return String(name || "").replace(/[（(].*?[）)]/g,"").replace(/[左右前后内外上下背掌腕踝胸腹髋膝足手趾指侧]/g, s=>s).trim();
+}
+function collectPointNames(){
+  const names = new Map();
+  DATA.regions.forEach(region=>{
+    region.views.forEach(view=>{
+      viewPoints(view, false).forEach(point=>{
+        const key = normalizeLearnName(point.name);
+        if(!key) return;
+        if(!names.has(key)) names.set(key, point.name);
+      });
+      viewPoints(view, true).forEach(point=>{
+        const key = normalizeLearnName(point.name);
+        if(!key) return;
+        if(!names.has(key)) names.set(key, point.name);
+      });
+    });
+  });
+  return [...names.entries()].map(([key,name])=>({key,name})).sort((a,b)=>a.key.localeCompare(b.key,'zh-Hans-CN'));
+}
+const POINT_INDEX = collectPointNames();
+const POINT_INFO = {
+  "掌指关节":"握拳时手背最突出的关节弓，一般位于掌骨头一排，常作为手部体块转折点。",
+  "虎口腹凸":"拇指与食指张开时虎口最饱满的肉垫，常随拇收拇展产生明显起伏。",
+  "锁骨下窝":"锁骨下方较容易形成的浅凹，抬臂或耸肩时轮廓会更明显。",
+  "髂前上嵴":"骨盆前上角最容易摸到的骨点，站立扭腰时常是腰胯转折锚点。",
+  "髌骨":"膝前最明显的骨性块面，伸膝时更清楚，屈膝时会向上滑动。",
+  "跟腱":"小腿后侧向跟骨汇聚的粗腱，踮脚时最容易观察到张力变化。"
+};
+let searchQuery = "";
+let searchResults = [];
 function viewPoints(view, usePractice=true){
   const practice = usePractice && view.practiceImage;
   return practice ? (view.practicePoints || view.points || []) : (view.points || []);
@@ -307,6 +366,8 @@ function buildLearnTargets(region=curRegion){
         groups.push(target);
       }
       map.get(key).steps.push({
+        id:`${view.id}#${pointIdx}`,
+        key,
         viewId:view.id,
         viewLabel:view.label,
         pointIdx,
@@ -320,16 +381,36 @@ function learnSignature(targets){
   return targets.map(target=>`${target.key}:${target.steps.map(step=>`${step.viewId}#${step.pointIdx}`).join(",")}`).join("|");
 }
 function currentLearnTarget(){
-  return learnSession ? learnSession.targets[learnSession.targetPos] : null;
+  if(!learnSession) return null;
+  return learnSession.targets.find(target=>!learnSession.completedKeys[target.key]) || null;
+}
+function learnDoneCount(){
+  if(!learnSession) return 0;
+  return learnSession.targets.filter(target=>learnSession.completedKeys[target.key]).length;
+}
+function isLearnTargetDone(target){
+  return !!(learnSession && target && learnSession.completedKeys[target.key]);
+}
+function currentLearnSteps(){
+  const target = currentLearnTarget();
+  return target ? target.steps.filter(step=>!learnSession.completedSteps[step.id]) : [];
 }
 function currentLearnStep(){
-  const target = currentLearnTarget();
-  return target ? target.steps[learnSession.stepPos] : null;
+  const steps = currentLearnSteps();
+  return steps[0] || null;
+}
+function markLearnStepDone(step){
+  if(!learnSession || !step) return;
+  const target = learnSession.targets.find(item=>item.key === step.key);
+  if(!target) return;
+  learnSession.completedSteps[step.id] = true;
+  if(target.steps.every(item=>learnSession.completedSteps[item.id])) learnSession.completedKeys[target.key] = true;
 }
 function syncLearnView(){
   if(mode !== "learn") return;
-  const step = currentLearnStep();
-  if(!step) return;
+  const target = currentLearnTarget();
+  if(!target) return;
+  const step = currentLearnStep() || target.steps[0];
   const targetView = curRegion.views.find(view=>view.id === step.viewId);
   if(targetView) curView = targetView;
 }
@@ -341,44 +422,59 @@ function ensureLearnSession(force=false){
       regionId: curRegion.id,
       signature,
       targets,
-      targetPos: 0,
-      stepPos: 0
+      completedKeys: {},
+      completedSteps: {}
     };
   } else {
+    const completedKeys = {...learnSession.completedKeys};
+    const completedSteps = {...learnSession.completedSteps};
     learnSession.targets = targets;
     learnSession.signature = signature;
-    if(learnSession.targetPos > targets.length) learnSession.targetPos = targets.length;
-    const target = targets[learnSession.targetPos];
-    if(!target) learnSession.stepPos = 0;
-    else if(learnSession.stepPos >= target.steps.length) learnSession.stepPos = Math.max(0, target.steps.length - 1);
+    learnSession.completedKeys = completedKeys;
+    learnSession.completedSteps = completedSteps;
   }
   syncLearnView();
 }
 function advanceLearn(){
-  if(!learnSession) return;
-  const target = currentLearnTarget();
-  if(!target) return;
-  if(learnSession.stepPos < target.steps.length - 1){
-    learnSession.stepPos++;
-  } else {
-    learnSession.targetPos++;
-    learnSession.stepPos = 0;
-  }
   syncLearnView();
 }
 function revealLearnAnswer(){
-  const step = currentLearnStep();
-  if(!step) return;
-  const dot = imgspace.querySelector(`.dot[data-idx="${step.pointIdx}"]`);
-  if(!dot) return;
-  const point = activePoints()[step.pointIdx];
-  if(!point) return;
-  dot.classList.add("sel");
-  showTip(dot, point.name, parseFloat(dot.style.left), parseFloat(dot.style.top));
+  const dots = currentLearnSteps().map(step=>({
+    step,
+    dot: imgspace.querySelector(`.dot[data-idx="${step.pointIdx}"]`)
+  })).filter(item=>item.dot);
+  if(!dots.length) return;
+  dots.forEach(({dot})=>dot.classList.add("sel"));
+  const first = dots[0];
+  const point = activePoints()[first.step.pointIdx];
+  showTip(first.dot, point.name, parseFloat(first.dot.style.left), parseFloat(first.dot.style.top));
   setTimeout(()=>{
-    dot.classList.remove("sel");
+    dots.forEach(({dot})=>dot.classList.remove("sel"));
     clearTip();
   }, 1400);
+}
+function findPointInfo(name=""){
+  const key = normalizeLearnName(name);
+  if(POINT_INFO[key]) return POINT_INFO[key];
+  if(key.includes("关节")) return "可把它理解为活动转折点，动作发生时常伴随骨点突起、皮肤褶皱或肌腱走向变化。";
+  if(key.includes("肌腱")) return "动作发力时会更明显，通常表现为线状或索状的高点/凹沟。";
+  if(key.includes("骨") || key.includes("踝") || key.includes("髁") || key.includes("结节") || key.includes("茎突")) return "这是较稳定的骨性标志，体表多表现为硬点、转折或清晰凸起。";
+  return "这是一个体表定位点，建议结合骨点、肌肉走向和动作时的形变一起记忆。";
+}
+function findSearchResults(query){
+  const q = query.trim();
+  if(!q) return [];
+  return POINT_INDEX.filter(item=>item.name.includes(q) || item.key.includes(q)).slice(0,12);
+}
+function updateSearchUI(){
+  const meta = $("#searchmeta");
+  if(!searchQuery.trim()){
+    meta.textContent = "可检索结构位置与特征说明";
+  } else if(searchResults.length){
+    meta.textContent = `找到 ${searchResults.length} 个相关结构`;
+  } else {
+    meta.textContent = "没有找到匹配结构";
+  }
 }
 
 const $ = s=>document.querySelector(s);
@@ -404,6 +500,7 @@ function showGallery(){
   $("#stagewrap").style.display="none";
   $("#aside").style.display="none";
   $("#modebar").style.display="none";
+  $("#searchbar").style.display="none";
   viewbar.style.display="none";
   quizbar.classList.remove("show");
 }
@@ -412,6 +509,7 @@ function showBody(){
   $("#stagewrap").style.display="flex";
   $("#aside").style.display="flex";
   $("#modebar").style.display="flex";
+  $("#searchbar").style.display="flex";
   viewbar.style.display="flex";
   renderViewbar();
   render();
@@ -440,15 +538,17 @@ function selectView(view){
 }
 function renderViewbar(){
   viewbar.innerHTML="";
-  const learnStep = mode === "learn" ? currentLearnStep() : null;
+  const learnTarget = mode === "learn" ? currentLearnTarget() : null;
   curRegion.views.forEach(view=>{
     const b=document.createElement("button");
     b.className="viewbtn"+(view===curView?" on":"");
     b.type="button";
     b.textContent=view.label;
-    if(mode === "learn" && learnStep){
-      b.disabled = true;
-      b.title = "学习模式会按当前点位自动切换图片";
+    if(mode === "learn" && learnTarget){
+      const enabled = learnTarget.steps.some(step=>step.viewId === view.id && !learnSession.completedSteps[step.id]);
+      b.disabled = !enabled;
+      b.title = enabled ? "切换到当前结构所在图片" : "当前结构不在这张图里";
+      if(enabled) b.onclick=()=>selectView(view);
     } else {
       b.onclick=()=>selectView(view);
     }
@@ -519,7 +619,7 @@ function render(){
 
   // masks (cover leftover printed text in test mode)
   [...imgspace.querySelectorAll(".mask")].forEach(e=>e.remove());
-  if(testing && meta.masks){
+  if(mode !== "edit" && meta.masks){
     meta.masks.forEach(m=>{
       const mx=(m.x-c.x)/c.w*100, my=(m.y-c.y)/c.h*100, mw=m.w/c.w*100, mh=m.h/c.h*100;
       const el=document.createElement("div"); el.className="mask";
@@ -580,22 +680,24 @@ function paintLearn(){
     $("#quizprog").textContent="";
     return;
   }
-  if(learnSession.targetPos>=learnSession.targets.length){
+  const doneCount = learnDoneCount();
+  if(doneCount>=learnSession.targets.length){
     $("#quizname").textContent="✓ 本区已学完";
     $("#quizprog").textContent=`完成 ${learnSession.targets.length}/${learnSession.targets.length}`;
     return;
   }
   const target = currentLearnTarget();
-  const step = currentLearnStep();
   $("#quizname").textContent=target.name;
-  $("#quizprog").textContent=`点位 ${learnSession.targetPos+1}/${learnSession.targets.length} · 图片 ${learnSession.stepPos+1}/${target.steps.length} · ${step.viewLabel}`;
+  $("#quizprog").textContent=`点位 ${doneCount+1}/${learnSession.targets.length} · 已完成位置 ${target.steps.filter(step=>learnSession.completedSteps[step.id]).length}/${target.steps.length}`;
 }
 function learnClick(idx,d,vx,vy,name){
-  const step = currentLearnStep();
-  if(!step || step.viewId !== curView.id) return;
+  const target = currentLearnTarget();
+  if(!target) return;
   showTip(d,name,vx,vy);
   setTimeout(clearTip,1100);
-  if(idx===step.pointIdx){
+  const step = target.steps.find(item=>item.viewId === curView.id && item.pointIdx === idx && !learnSession.completedSteps[item.id]);
+  if(step){
+    markLearnStepDone(step);
     d.classList.add("answered");
     setTimeout(()=>{
       advanceLearn();
@@ -692,7 +794,7 @@ $("#resetTest").onclick=()=>{
 function updateScore(){
   if(mode==="learn"){
     const total = learnSession ? learnSession.targets.length : 0;
-    const doneCount = learnSession ? Math.min(learnSession.targetPos, total) : 0;
+    const doneCount = learnSession ? learnDoneCount() : 0;
     scoreEl.innerHTML=`本区进度 <b>${doneCount}</b> / ${total}`;
     return;
   }
@@ -702,11 +804,11 @@ function updateScore(){
 
 // ---------- list ----------
 function buildList(){
+  const points = activePoints();
   if(mode==="learn"){
     buildLearnList();
     return;
   }
-  const points = activePoints();
   $("#asideTitle").textContent=`结构清单 · ${curRegion.name} · ${curView.label} (${points.length})`;
   listEl.innerHTML="";
   const rd=done[viewKey()]||{};
@@ -738,6 +840,7 @@ function buildList(){
     };
     listEl.appendChild(li);
   });
+  renderSearchResults();
 }
 function buildLearnList(){
   const targets = learnSession ? learnSession.targets : [];
@@ -753,13 +856,66 @@ function buildLearnList(){
   }
   targets.forEach((target,idx)=>{
     const li=document.createElement("div");
-    const doneTarget = learnSession && idx < learnSession.targetPos;
-    const currentTarget = learnSession && idx === learnSession.targetPos && learnSession.targetPos < targets.length;
-    const stepDone = currentTarget ? learnSession.stepPos : (doneTarget ? target.steps.length : 0);
+    const doneTarget = isLearnTargetDone(target);
+    const currentTarget = currentLearnTarget()?.key === target.key;
+    const stepDone = target.steps.filter(step=>learnSession.completedSteps[step.id]).length;
     li.className = "li" + (doneTarget ? " done" : "") + (currentTarget ? " chosen" : "");
     li.innerHTML=`<span class="b">${idx+1}</span><span class="nm">${target.name}</span><span class="meta">${stepDone}/${target.steps.length}</span>`;
-    li.onclick=()=>{ if(currentTarget) revealLearnAnswer(); };
+    li.onclick=()=>{
+      if(currentTarget){
+        revealLearnAnswer();
+        return;
+      }
+      if(doneTarget){
+        const view = curRegion.views.find(item=>item.id === target.steps[0]?.viewId);
+        if(view) selectView(view);
+        setTimeout(()=>{
+          target.steps
+            .filter(step=>step.viewId === target.steps[0]?.viewId)
+            .forEach(step=>{
+              const dot = imgspace.querySelector(`.dot[data-idx="${step.pointIdx}"]`);
+              if(dot){
+                dot.classList.add("sel");
+                setTimeout(()=>dot.classList.remove("sel"),900);
+              }
+            });
+        },0);
+      }
+    };
     listEl.appendChild(li);
+  });
+  renderSearchResults();
+}
+function renderSearchResults(){
+  if(!searchQuery.trim()) return;
+  const points = activePoints();
+  const title = document.createElement("div");
+  title.className = "li info";
+  title.innerHTML = `<span class="nm">检索结果</span><span class="subinfo">输入结构名称可查看特征说明与当前图是否出现</span>`;
+  listEl.appendChild(title);
+  if(!searchResults.length){
+    const empty=document.createElement("div");
+    empty.className="li info";
+    empty.innerHTML=`<span class="nm">没有找到匹配结构</span><span class="subinfo">可尝试输入更短的关键字，例如“掌指”“锁骨”“跟腱”</span>`;
+    listEl.appendChild(empty);
+    return;
+  }
+  searchResults.forEach(result=>{
+    const matchedIdx = points.findIndex(point=>normalizeLearnName(point.name) === result.key);
+    const item=document.createElement("div");
+    item.className="li info";
+    item.innerHTML=`<span class="nm">${result.name}</span><span class="subinfo">${findPointInfo(result.name)}${matchedIdx>=0 ? ` 当前图可见：点 ${matchedIdx+1}` : " 当前图未出现"}</span>`;
+    item.onclick=()=>{
+      if(matchedIdx<0) return;
+      const dot=imgspace.querySelector(`.dot[data-idx="${matchedIdx}"]`);
+      if(dot){
+        dot.classList.add("sel");
+        setTimeout(()=>dot.classList.remove("sel"),900);
+        const nm=item.querySelector(".nm");
+        if(nm) nm.textContent=result.name;
+      }
+    };
+    listEl.appendChild(item);
   });
 }
 $("#revealAll").onclick=()=>{
@@ -872,12 +1028,21 @@ DATA.gallery.forEach(g=>{
 });
 $("#lbx").onclick=()=>$("#lightbox").classList.remove("show");
 $("#lightbox").onclick=e=>{ if(e.target.id==="lightbox") $("#lightbox").classList.remove("show"); };
+$("#jointSearch").addEventListener("input",e=>{
+  searchQuery = e.target.value;
+  searchResults = findSearchResults(searchQuery);
+  updateSearchUI();
+  if($("#gallery").classList.contains("show")) return;
+  buildList();
+});
 
 // init  (URL params for quick preview: ?region=foot&mode=learn)
 const qp=new URLSearchParams(location.search);
 if(qp.get("region")){ const r=DATA.regions.find(x=>x.id===qp.get("region")); if(r){ curRegion=r; curView=r.views[0]; const ti=DATA.regions.indexOf(r); setTab(tabs.children[ti]); } }
 if(qp.get("view")){ const v=curRegion.views.find(x=>x.id===qp.get("view")); if(v) curView=v; }
 if(qp.get("mode")){ mode=qp.get("mode"); document.querySelectorAll("#modeseg button").forEach(x=>x.classList.toggle("on",x.dataset.mode===mode)); }
+if(qp.get("q")){ searchQuery=qp.get("q"); $("#jointSearch").value=searchQuery; searchResults=findSearchResults(searchQuery); }
+updateSearchUI();
 const rerender=()=>{ if($("#gallery").classList.contains("show"))return; render(); };
 window.addEventListener("resize",rerender);
 if(window.visualViewport){ window.visualViewport.addEventListener("resize",rerender); }
