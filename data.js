@@ -10,6 +10,15 @@ window.ANATOMY_DATA = {
           "image": "images/03-hand-back.jpeg",
           "w": 640,
           "h": 579,
+          "practiceImage": "images/77-hand-back-clean-v2.png",
+          "practiceW": 640,
+          "practiceH": 579,
+          "practiceCrop": {
+            "x": 20,
+            "y": 8,
+            "w": 54,
+            "h": 88
+          },
           "crop": {
             "x": 18,
             "y": 6,
@@ -1771,6 +1780,12 @@ window.ANATOMY_DATA = {
           "practiceImage": "images/62-lowerleg-side-class-learn.jpeg",
           "practiceW": 2048,
           "practiceH": 1536,
+          "practiceCrop": {
+            "x": 29,
+            "y": 2,
+            "w": 36,
+            "h": 96
+          },
           "practicePoints": [
             {
               "x": 48.12,
@@ -2226,6 +2241,12 @@ window.ANATOMY_DATA = {
           "practiceImage": "images/61-torso-front-class-learn-v2.png",
           "practiceW": 2304,
           "practiceH": 1728,
+          "practiceCrop": {
+            "x": 12,
+            "y": 4,
+            "w": 72,
+            "h": 92
+          },
           "crop": {
             "x": 0,
             "y": 0,
