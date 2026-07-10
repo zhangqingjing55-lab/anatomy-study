@@ -2223,9 +2223,9 @@ window.ANATOMY_DATA = {
           "editImage": "images/57-torso-front-class.jpeg",
           "editW": 1702,
           "editH": 1276,
-          "practiceImage": "images/57-torso-front-class.jpeg",
-          "practiceW": 1702,
-          "practiceH": 1276,
+          "practiceImage": "images/61-torso-front-class-learn-v2.png",
+          "practiceW": 2304,
+          "practiceH": 1728,
           "crop": {
             "x": 0,
             "y": 0,
