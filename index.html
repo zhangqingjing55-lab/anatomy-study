@@ -212,7 +212,7 @@
 
 <div class="lightbox" id="lightbox"><span class="x" id="lbx">×</span><img id="lbimg" alt=""></div>
 
-<script src="data.js?v=20260706b"></script>
+<script src="data.js?v=20260710c"></script>
 <script>
 const DATA = window.ANATOMY_DATA;
 const LS_EDITS = "anatomy_edits_v11";
@@ -274,7 +274,7 @@ let curRegion = DATA.regions[0];
 let curView = curRegion.views[0];
 let mode = "test";
 let quiz = null; // {order:[idx...], pos, correct, total}
-let learnSession = null; // {regionId, signature, targets:[{key,name,steps:[...]}], completedKeys:{}, completedSteps:{}}
+let learnSession = null; // {regionId, signature, targets:[{key,name,steps:[...]}], completedKeys:{}, completedSteps:{}, preferredViewId:null}
 const AUTO_PRACTICE_MASKS = {
   "hand:hand-views":[{x:86,y:91,w:13,h:7,c:"#f8f8f8"}],
   "torso:torso-shoulder-chest":[{x:86,y:91,w:13,h:7,c:"#fcfcfb"}],
@@ -399,6 +399,9 @@ function currentLearnStep(){
   const steps = currentLearnSteps();
   return steps[0] || null;
 }
+function hasUnfinishedLearnStepInView(target, viewId){
+  return !!(target && viewId && target.steps.some(step=>step.viewId === viewId && !learnSession.completedSteps[step.id]));
+}
 function markLearnStepDone(step){
   if(!learnSession || !step) return;
   const target = learnSession.targets.find(item=>item.key === step.key);
@@ -410,6 +413,11 @@ function syncLearnView(){
   if(mode !== "learn") return;
   const target = currentLearnTarget();
   if(!target) return;
+  if(hasUnfinishedLearnStepInView(target, curView.id)) return;
+  if(hasUnfinishedLearnStepInView(target, learnSession?.preferredViewId)){
+    const preferredView = curRegion.views.find(view=>view.id === learnSession.preferredViewId);
+    if(preferredView){ curView = preferredView; return; }
+  }
   const step = currentLearnStep() || target.steps[0];
   const targetView = curRegion.views.find(view=>view.id === step.viewId);
   if(targetView) curView = targetView;
@@ -423,15 +431,18 @@ function ensureLearnSession(force=false){
       signature,
       targets,
       completedKeys: {},
-      completedSteps: {}
+      completedSteps: {},
+      preferredViewId: null
     };
   } else {
     const completedKeys = {...learnSession.completedKeys};
     const completedSteps = {...learnSession.completedSteps};
+    const preferredViewId = learnSession.preferredViewId || null;
     learnSession.targets = targets;
     learnSession.signature = signature;
     learnSession.completedKeys = completedKeys;
     learnSession.completedSteps = completedSteps;
+    learnSession.preferredViewId = preferredViewId;
   }
   syncLearnView();
 }
@@ -531,6 +542,7 @@ function selectRegion(r){
   learnSession=null;
 }
 function selectView(view){
+  if(mode === "learn" && learnSession) learnSession.preferredViewId = view.id;
   curView=view;
   quiz=null;
   renderViewbar();
@@ -562,13 +574,14 @@ function render(){
   $("#modehint").textContent=HINTS[mode];
   renderViewbar();
   stage.className="stage "+mode;
+  const practicing = mode !== "edit";
   const testing = (mode==="test");
   const fullbody = isFullbodyView();
   const meta = activeMeta();
   const points = meta.points;
   const rd = done[viewKey()]||{};
   // geometry
-  const c = testing ? meta.crop : {x:0,y:0,w:100,h:100};
+  const c = practicing ? (meta.crop || {x:0,y:0,w:100,h:100}) : {x:0,y:0,w:100,h:100};
   const pxW = meta.w*(c.w/100), pxH = meta.h*(c.h/100);
   const ar = pxW/pxH;
   // fit stage into wrap
@@ -633,7 +646,7 @@ function render(){
   points.forEach((p,idx)=>{
     // map to view coords
     const vx=(p.x-c.x)/c.w*100, vy=(p.y-c.y)/c.h*100;
-    if(testing && (vx<0||vx>100||vy<0||vy>100)) return; // outside crop
+    if(practicing && (vx<0||vx>100||vy<0||vy>100)) return; // outside crop
     const d=document.createElement("div"); d.className="dot"; d.style.left=vx+"%"; d.style.top=vy+"%";
     d.dataset.idx=idx;
     if(mode!=="learn"){ const n=document.createElement("span"); n.className="num"; n.textContent=idx+1; d.appendChild(n); }
